@@ -2,7 +2,16 @@
 
 A Spring Boot service for the casus "[Three-Kid Family Challenge](doc/casus.md)", built with **acceptance test-driven development (ATDD)** as described by Dave Farley in *Modern Software Engineering* and *Continuous Delivery*, and with **automated quality assurance**: design rules are enforced by tests in the pipeline, not by review afterwards.
 
-> **Status:** step 0 in progress. The guardrails (ArchUnit rules and a source scan, [ADR 0002](doc/adr/0002-guardrails-as-archunit-tests.md)) run in `./mvnw verify`; each one has been seen red once. Next: the walking skeleton.
+> **Status:** step 0, the walking skeleton. The service reports the version it was built from (`GET /api/version`), checked by an acceptance scenario against the Docker image of that build. The guardrails ([ADR 0002](doc/adr/0002-guardrails-as-archunit-tests.md)) run in the commit stage; each one has been seen red once. Next: the pipeline in GitHub Actions, then the first matching scenario.
+
+## Getting started
+
+```bash
+make help            # all targets
+make commit-stage    # unit, integration and architecture tests
+make acceptance      # build the image of this commit and run the scenarios against it (needs Docker)
+make run             # the service on http://localhost:8080
+```
 
 ## What the service will do
 

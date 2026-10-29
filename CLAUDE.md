@@ -6,7 +6,7 @@ The casus "Three-Kid Family Challenge" ([doc/casus.md](doc/casus.md); the origin
 
 Werkwijze: skill `atdd` (`.claude/skills/atdd/`). This profile holds what is specific to this project.
 
-> **Status: step 0 in progress.** The guardrails are in place (ADR 0002) and `./mvnw verify` runs them. No Makefile, image, pipeline or acceptance test yet: next is the walking skeleton. Commands marked *(not yet verified)* have not run.
+> **Status: step 0 (walking skeleton) built locally.** Guardrails (ADR 0002), the version scenario in four layers (ADR 0004), Jib and Testcontainers (ADR 0003) run green locally. The pipeline has not run yet. Commands marked *(not yet verified)* have not run.
 
 **Language:** English, in the code (domain terms), the scenarios, the ADRs, the docs and the commit messages. The skills `atdd` and `uitleg` come from [banksim-mse](https://github.com/edwinbulter/banksim-mse) and stay in Dutch. `atdd` is a copy extended with the AQA guardrails (§4) and Farley's principles on cohesion, idempotency and measuring; it goes back to banksim-mse once the guardrails have run here. `uitleg` differs in one rule: it always explains in Dutch, whatever language this profile prescribes.
 
@@ -18,11 +18,11 @@ Werkwijze: skill `atdd` (`.claude/skills/atdd/`). This profile holds what is spe
 New libraries or tools (jqwik, PIT, ...) only with an ADR.
 
 **Commands**
-- Commit stage: `./mvnw -B verify` (unit, integration and architecture tests). Later `make commit-stage` *(not yet verified)*.
-- Build the image: `make image` (Jib, local Docker daemon, `three-kids:<version>`; skips the tests) *(not yet verified)*.
-- Acceptance tests: `make acceptance` (`image` + `acceptance-tests`) *(not yet verified)*.
+- Commit stage: `make commit-stage` (`mvnw verify`: unit, integration and architecture tests; the acceptance module only compiles and runs `FourLayerTests`).
+- Build the image: `make image` (Jib, local Docker daemon, `three-kids:<version>`; skips the tests).
+- Acceptance tests: `make acceptance` (`image` + `acceptance-tests`).
 - One scenario: `./mvnw -B -pl acceptance verify -DskipITs=false -Dapp.version=$(make -s version) -Dit.test=<ScenarioClass>` *(not yet verified)*.
-- Which version runs: `make version` (short commit hash, `-dirty` with uncommitted changes); `GET /api/version` on the running service *(not yet verified)*.
+- Which version runs: `make version` (short commit hash, `-dirty` with uncommitted changes); `GET /api/version` on the running service.
 - Run the service: `make run` (http://localhost:8080) *(not yet verified)*.
 - Pipeline: `gh run list --limit 3` and `gh run watch <id> --exit-status` *(not yet verified)*.
 
@@ -49,6 +49,8 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 | DTOs stay in `api` | `ArchitectureTests.dtosStayInApi` | `architecture/` |
 | No `synchronized` in production code; use `ConcurrentHashMap`, locks or atomics | `ArchitectureTests.noSynchronizedMethods` + `NoSynchronizedBlocksTests` | `architecture/` |
 | No `LocalDate.now()`, `LocalDateTime.now()`, `Instant.now()`: use the injected `Clock` | `ArchitectureTests.noSystemClock` | `architecture/` |
+| Four layers: scenarios speak only the DSL; drivers make no assertions | `FourLayerTests` | `acceptance/.../architecture/` |
+| The acceptance tests test the build that was just made | `ServiceVersionScenarios` | `acceptance/.../scenarios/` |
 | Simplest construct: matching is a stream filter over all people in memory; no incremental matching, sorting or indexes unless a measurement demands it (ADR) | review of the ADR + `make perf` (later) | – |
 | Mutations are idempotent: a POST of a known ID replaces, a DELETE of a deleted ID changes nothing | unit test + scenario per mutation | – |
 
@@ -61,6 +63,7 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 - No commit prefix, unless the user names one.
 
 **Pitfalls**
+- The image sets `APP_VERSION`, which Spring binds to `app.version` before `application.yml`. Sabotage on the version therefore belongs in the code, not in the yml.
 - Commit stage and image are separate: `make image` builds with `-DskipTests`. After a code change use `make acceptance`, never `make acceptance-tests` alone.
 - HTTP status 444 is not in Spring's `HttpStatus`: use `ResponseEntity.status(444)`.
 - "Under 18" changes as time passes without a POST. Never cache the age check; use the injected `Clock`.
