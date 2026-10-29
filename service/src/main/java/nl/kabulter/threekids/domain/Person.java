@@ -19,6 +19,16 @@ public record Person(
         return Long.valueOf(parent).equals(parent1) || Long.valueOf(parent).equals(parent2);
     }
 
+    /** How many of parent1 and parent2 are still unknown. */
+    public int emptyParentSlots() {
+        return (parent1 == null ? 1 : 0) + (parent2 == null ? 1 : 0);
+    }
+
+    /** Whether this record lists the given person as a child. */
+    public boolean namesAsChild(long child) {
+        return children.contains(child);
+    }
+
     /** A person without known relations. */
     public Person(long id, String name, LocalDate birthDate) {
         this(id, name, birthDate, null, null, null, List.of());

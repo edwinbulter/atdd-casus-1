@@ -130,6 +130,48 @@ class ThreeKidFamilyTests {
         assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
     }
 
+    @Test
+    void childrenWithoutParentsAreRepairedFromBothParentsRecords() {
+        Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
+        register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of(3L, 4L, 5L)));
+        registerChildrenWithParents(null, null);
+
+        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isTrue();
+    }
+
+    @Test
+    void anEmptySecondSlotIsRepairedFromThePartnersRecord() {
+        Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
+        register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of(3L, 4L, 5L)));
+        registerChildrenWithParents(1L, null);
+
+        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isTrue();
+    }
+
+    @Test
+    void anEmptySlotIsNotRepairedByAPartnerWhoDoesNotNameTheChild() {
+        Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
+        register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of()));
+        registerChildrenWithParents(1L, null);
+
+        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+    }
+
+    @Test
+    void oneEmptySlotCannotTakeBothParents() {
+        Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
+        register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of(3L, 4L, 5L)));
+        registerChildrenWithParents(6L, null);
+
+        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+    }
+
+    private void registerChildrenWithParents(Long parent1, Long parent2) {
+        for (long id = 3; id <= 5; id++) {
+            register(new Person(id, "Child " + id, YOUNG, parent1, parent2, null, List.of()));
+        }
+    }
+
     private static Person parent(Long partner, List<Long> children) {
         return new Person(1, "Homer", PARENT_BORN, null, null, partner, children);
     }
