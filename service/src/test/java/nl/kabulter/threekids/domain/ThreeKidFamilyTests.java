@@ -104,6 +104,32 @@ class ThreeKidFamilyTests {
         assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
     }
 
+    @Test
+    void aChildThatDoesNotNameThePartnerPreventsAMatch() {
+        Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
+        registerChildren(YOUNG, YOUNG, YOUNG);
+        register(new Person(4, "Lisa", YOUNG, 1L, 6L, null, List.of()));
+
+        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+    }
+
+    @Test
+    void aChildWhoseOwnRecordNamesOtherParentsIsNotThePersonsChild() {
+        Person marge = register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of(3L, 4L, 5L)));
+        registerChildren(YOUNG, YOUNG, YOUNG);
+        register(new Person(4, "Lisa", YOUNG, 1L, 6L, null, List.of()));
+
+        assertThat(ThreeKidFamily.matches(marge, people, TODAY)).isFalse();
+    }
+
+    @Test
+    void aChildWithoutARecordPreventsAMatch() {
+        Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
+        registerChildren(YOUNG, YOUNG);
+
+        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+    }
+
     private static Person parent(Long partner, List<Long> children) {
         return new Person(1, "Homer", PARENT_BORN, null, null, partner, children);
     }

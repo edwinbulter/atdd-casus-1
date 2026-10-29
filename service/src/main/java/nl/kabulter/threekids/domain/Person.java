@@ -14,6 +14,11 @@ public record Person(
         children = children == null ? List.of() : List.copyOf(children);
     }
 
+    /** Whether this record names the given person as parent1 or parent2. */
+    public boolean namesAsParent(long parent) {
+        return Long.valueOf(parent).equals(parent1) || Long.valueOf(parent).equals(parent2);
+    }
+
     /** A person without known relations. */
     public Person(long id, String name, LocalDate birthDate) {
         this(id, name, birthDate, null, null, null, List.of());
