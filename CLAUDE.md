@@ -6,7 +6,7 @@ The casus "Three-Kid Family Challenge" ([doc/casus.md](doc/casus.md); the origin
 
 Werkwijze: skill `atdd` (`.claude/skills/atdd/`). This profile holds what is specific to this project.
 
-> **Status: step 0 not started.** No build, no pipeline and no acceptance test yet. Next: the guardrails (skill §4), then the walking skeleton. Every command below is **not yet verified** until it has run.
+> **Status: step 0 in progress.** The guardrails are in place (ADR 0002) and `./mvnw verify` runs them. No Makefile, image, pipeline or acceptance test yet: next is the walking skeleton. Commands marked *(not yet verified)* have not run.
 
 **Language:** English, in the code (domain terms), the scenarios, the ADRs, the docs and the commit messages. The skills `atdd` and `uitleg` come from [banksim-mse](https://github.com/edwinbulter/banksim-mse) and stay in Dutch. `atdd` is a copy extended with the AQA guardrails (§4) and Farley's principles on cohesion, idempotency and measuring; it goes back to banksim-mse once the guardrails have run here. `uitleg` differs in one rule: it always explains in Dutch, whatever language this profile prescribes.
 
@@ -17,14 +17,14 @@ Werkwijze: skill `atdd` (`.claude/skills/atdd/`). This profile holds what is spe
 
 New libraries or tools (jqwik, PIT, ...) only with an ADR.
 
-**Commands** (not yet verified)
-- Commit stage: `make commit-stage` (`mvnw verify`: unit, integration and architecture tests; the acceptance module only compiles).
-- Build the image: `make image` (Jib, local Docker daemon, `three-kids:<version>`; skips the tests).
-- Acceptance tests: `make acceptance` (`image` + `acceptance-tests`).
-- One scenario: `./mvnw -B -pl acceptance verify -DskipITs=false -Dapp.version=$(make -s version) -Dit.test=<ScenarioClass>`.
-- Which version runs: `make version` (short commit hash, `-dirty` with uncommitted changes); `GET /api/version` on the running service.
-- Run the service: `make run` (http://localhost:8080).
-- Pipeline: `gh run list --limit 3` and `gh run watch <id> --exit-status`.
+**Commands**
+- Commit stage: `./mvnw -B verify` (unit, integration and architecture tests). Later `make commit-stage` *(not yet verified)*.
+- Build the image: `make image` (Jib, local Docker daemon, `three-kids:<version>`; skips the tests) *(not yet verified)*.
+- Acceptance tests: `make acceptance` (`image` + `acceptance-tests`) *(not yet verified)*.
+- One scenario: `./mvnw -B -pl acceptance verify -DskipITs=false -Dapp.version=$(make -s version) -Dit.test=<ScenarioClass>` *(not yet verified)*.
+- Which version runs: `make version` (short commit hash, `-dirty` with uncommitted changes); `GET /api/version` on the running service *(not yet verified)*.
+- Run the service: `make run` (http://localhost:8080) *(not yet verified)*.
+- Pipeline: `gh run list --limit 3` and `gh run watch <id> --exit-status` *(not yet verified)*.
 
 **Where things go**
 
@@ -36,7 +36,7 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 | Domain (family graph, pattern) | `service/src/main/java/nl/kabulter/threekids/domain/` (no Spring) | JUnit |
 | Application | `.../application/` | JUnit with test doubles |
 | API (controllers, DTOs) | `.../api/` | `@WebMvcTest`; `@SpringBootTest` with MockMvc |
-| Guardrails | `service/src/test/java/.../architecture/` | ArchUnit, plus a source scan |
+| Guardrails | `service/src/test/java/.../architecture/` | `ArchitectureTests` (ArchUnit), `NoSynchronizedBlocksTests` (source scan) |
 | Pipeline | `.github/workflows/ci.yml` | seen red once, then green |
 | ADR | `doc/adr/NNNN-title.md` | – |
 
@@ -44,11 +44,11 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 
 | Guardrail | Test | Where |
 | --- | --- | --- |
-| Layers `api → application → domain`, no cycles | ArchUnit | `architecture/` |
-| Domain knows no framework (no `org.springframework..`, `jakarta..`) | ArchUnit | `architecture/` |
-| DTOs stay in `api` | ArchUnit | `architecture/` |
-| No `synchronized` in `api`, `application`, `domain`; use `ConcurrentHashMap`, locks or atomics | ArchUnit (methods) + source scan (blocks) | `architecture/` |
-| No `LocalDate.now()`, `LocalDateTime.now()`, `Instant.now()`: use the injected `Clock` | ArchUnit | `architecture/` |
+| Layers `api → application → domain`, no cycles | `ArchitectureTests.layers`, `.noCycles` | `architecture/` |
+| Domain knows no framework (no `org.springframework..`, `jakarta..`) | `ArchitectureTests.domainKnowsNoFramework` | `architecture/` |
+| DTOs stay in `api` | `ArchitectureTests.dtosStayInApi` | `architecture/` |
+| No `synchronized` in production code; use `ConcurrentHashMap`, locks or atomics | `ArchitectureTests.noSynchronizedMethods` + `NoSynchronizedBlocksTests` | `architecture/` |
+| No `LocalDate.now()`, `LocalDateTime.now()`, `Instant.now()`: use the injected `Clock` | `ArchitectureTests.noSystemClock` | `architecture/` |
 | Simplest construct: matching is a stream filter over all people in memory; no incremental matching, sorting or indexes unless a measurement demands it (ADR) | review of the ADR + `make perf` (later) | – |
 | Mutations are idempotent: a POST of a known ID replaces, a DELETE of a deleted ID changes nothing | unit test + scenario per mutation | – |
 

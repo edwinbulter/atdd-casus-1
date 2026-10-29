@@ -2,7 +2,7 @@
 
 A Spring Boot service for the casus "[Three-Kid Family Challenge](doc/casus.md)", built with **acceptance test-driven development (ATDD)** as described by Dave Farley in *Modern Software Engineering* and *Continuous Delivery*, and with **automated quality assurance**: design rules are enforced by tests in the pipeline, not by review afterwards.
 
-> **Status:** step 0 not started. The repository holds the casus, the way of working and the backlog; there is no code yet.
+> **Status:** step 0 in progress. The guardrails (ArchUnit rules and a source scan, [ADR 0002](doc/adr/0002-guardrails-as-archunit-tests.md)) run in `./mvnw verify`; each one has been seen red once. Next: the walking skeleton.
 
 ## What the service will do
 

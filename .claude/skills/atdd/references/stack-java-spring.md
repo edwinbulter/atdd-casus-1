@@ -38,11 +38,11 @@ class VersieControllerTests {
 
 ### Vangrails met ArchUnit (SKILL.md §4)
 
-> Nog niet gedraaid: deze regels worden in pr-casus-2 geverifieerd. Werk ze daarna bij met wat echt werkte.
+> Gedraaid in pr-casus-2 (ArchUnit 1.5.1, Spring Boot 4.0.8): elke regel één keer rood gezien via sabotage, daarna groen.
 
 ```java
 @AnalyzeClasses(packages = "nl.example.app", importOptions = ImportOption.DoNotIncludeTests.class)
-class ArchitectureRules {
+class ArchitectureTests {
 
     @ArchTest
     static final ArchRule layers = layeredArchitecture().consideringOnlyDependenciesInLayers()
@@ -51,16 +51,19 @@ class ArchitectureRules {
             .layer("domain").definedBy("..domain..")
             .whereLayer("api").mayNotBeAccessedByAnyLayer()
             .whereLayer("application").mayOnlyBeAccessedByLayers("api")
-            .whereLayer("domain").mayOnlyBeAccessedByLayers("api", "application");
+            .whereLayer("domain").mayOnlyBeAccessedByLayers("api", "application")
+            .withOptionalLayers(true);
 
     @ArchTest
     static final ArchRule domainKnowsNoFramework = noClasses().that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat().resideInAnyPackage("org.springframework..", "jakarta..");
+            .should().dependOnClassesThat().resideInAnyPackage("org.springframework..", "jakarta..")
+            .allowEmptyShould(true);
 
     @ArchTest
     static final ArchRule noSynchronizedMethods = noMethods()
             .that().areDeclaredInClassesThat().resideInAnyPackage("..api..", "..application..", "..domain..")
-            .should().haveModifier(JavaModifier.SYNCHRONIZED);
+            .should().haveModifier(JavaModifier.SYNCHRONIZED)
+            .allowEmptyShould(true);
 
     @ArchTest
     static final ArchRule noSystemClock = noClasses()
@@ -73,10 +76,13 @@ class ArchitectureRules {
             .should().dependOnClassesThat().resideInAPackage("..api..");
 
     @ArchTest
-    static final ArchRule noCycles = slices().matching("nl.example.app.(*)..").should().beFreeOfCycles();
+    static final ArchRule noCycles = slices().matching("nl.example.app.(*)..").should().beFreeOfCycles()
+            .allowEmptyShould(true);
 }
 ```
 
+- **Een regel die geen klassen controleert, faalt** ("failed to check any classes", of "Layer 'domain' is empty"). Dat gebeurt zolang een laag nog leeg is. Zet de uitzondering per regel (`allowEmptyShould(true)`, `withOptionalLayers(true)`) alleen op de regels over één laag. Laat de regels over alle klassen streng (niet `archRule.failOnEmptyShould=false` globaal): dan wordt een verkeerd root-package meteen rood.
+- **Noem de klasse `*Tests`.** Surefire draait standaard alleen `*Test`, `*Tests`, `Test*` en `*TestCase`; een klasse `ArchitectureRules` wordt stil overgeslagen.
 - **`synchronized`-blokken ziet ArchUnit niet.** Het keyword op een methode is een modifier; een blok is alleen een `monitorenter` in de bytecode. Vul de regel aan met een gewone JUnit-test die de bronbestanden in `src/main/java` op `synchronized` scant.
 - **Idempotentie** krijgt per mutatie een eigen unittest of scenario: dezelfde mutatie twee keer geeft dezelfde toestand als één keer.
 - `callMethod(LocalDate.class, "now")` zonder parametertypes raakt alleen `now()`. `LocalDate.now(clock)` blijft toegestaan; zo dwing je de geïnjecteerde `Clock` af.
