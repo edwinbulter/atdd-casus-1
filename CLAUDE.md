@@ -6,7 +6,7 @@ The casus "Three-Kid Family Challenge" ([doc/casus.md](doc/casus.md); the origin
 
 Werkwijze: skill `atdd` (`.claude/skills/atdd/`). This profile holds what is specific to this project.
 
-> **Status: step 0 (walking skeleton) built locally.** Guardrails (ADR 0002), the version scenario in four layers (ADR 0004), Jib and Testcontainers (ADR 0003) run green locally. The pipeline has not run yet. Commands marked *(not yet verified)* have not run.
+> **Step 0 (walking skeleton) is done:** the commands below are verified, locally and in CI (seen red once: a failing commit stage skipped the acceptance stage). Commands marked *(not yet verified)* have not run.
 
 **Language:** English, in the code (domain terms), the scenarios, the ADRs, the docs and the commit messages. The skills `atdd` and `uitleg` come from [banksim-mse](https://github.com/edwinbulter/banksim-mse) and stay in Dutch. `atdd` is a copy extended with the AQA guardrails (§4) and Farley's principles on cohesion, idempotency and measuring; it goes back to banksim-mse once the guardrails have run here. `uitleg` differs in one rule: it always explains in Dutch, whatever language this profile prescribes.
 
@@ -21,10 +21,10 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 - Commit stage: `make commit-stage` (`mvnw verify`: unit, integration and architecture tests; the acceptance module only compiles and runs `FourLayerTests`).
 - Build the image: `make image` (Jib, local Docker daemon, `three-kids:<version>`; skips the tests).
 - Acceptance tests: `make acceptance` (`image` + `acceptance-tests`).
-- One scenario: `./mvnw -B -pl acceptance verify -DskipITs=false -Dapp.version=$(make -s version) -Dit.test=<ScenarioClass>` *(not yet verified)*.
+- One scenario: `./mvnw -B -pl acceptance verify -DskipITs=false -Dapp.version=$(make -s version) -Dit.test=<ScenarioClass>` (build the image first).
 - Which version runs: `make version` (short commit hash, `-dirty` with uncommitted changes); `GET /api/version` on the running service.
 - Run the service: `make run` (http://localhost:8080) *(not yet verified)*.
-- Pipeline: `gh run list --limit 3` and `gh run watch <id> --exit-status` *(not yet verified)*.
+- Pipeline: `gh run list --limit 3` and `gh run watch <id> --exit-status`.
 
 **Where things go**
 

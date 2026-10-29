@@ -4,6 +4,8 @@ One iteration per item, following the `atdd` skill: ⛔ scenario and expected va
 
 ## Step 0
 
+Done.
+
 1. **Guardrails.** Maven modules `service` and `acceptance`; ArchUnit rules from the profile, each seen red by sabotage. ⛔ Approval before the walking skeleton.
 2. **Walking skeleton.** Scenario "the service reports the version it was built from" in four layers against the Jib image; `Makefile`; GitHub Actions with a commit stage and an acceptance stage, seen red once, then green.
 
