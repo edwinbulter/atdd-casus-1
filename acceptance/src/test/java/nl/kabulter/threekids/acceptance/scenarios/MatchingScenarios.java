@@ -45,4 +45,21 @@ class MatchingScenarios {
         // Then Homer and Marge match, with everything known about them
         registry.answersThatTheMatchingPeopleAre(homer, marge);
     }
+
+    @Test
+    void aThreeKidFamilyWithOnlyAdultChildrenDoesNotMatch() {
+        // Given Homer and Marge are registered as partners, each with the children Bart, Lisa and Maggie
+        registry.registers(homer.withPartner(marge).withChildren(bart, lisa, maggie));
+        registry.registers(marge.withPartner(homer).withChildren(bart, lisa, maggie));
+
+        // And Bart and Lisa are adults, registered with the parents Homer and Marge
+        registry.registers(bart.bornOn("1980-04-01").withParents(homer, marge));
+        registry.registers(lisa.bornOn("1982-05-09").withParents(homer, marge));
+
+        // When Maggie, also an adult, is registered with the parents Homer and Marge
+        registry.registers(maggie.bornOn("1988-01-12").withParents(homer, marge));
+
+        // Then nobody matches yet
+        registry.answersThatNobodyMatchesYet();
+    }
 }
