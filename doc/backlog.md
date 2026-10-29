@@ -11,7 +11,7 @@ Done.
 
 ## Phase 1 – matching
 
-1. A single unknown person is registered → nobody matches (444).
+1. **Done** (`MatchingScenarios.aSinglePersonWithoutAFamilyDoesNotMatch`): a single unknown person is registered → nobody matches (444, without a body).
 2. A complete family through successive registrations: a parent with a partner and three children, both parents on every child, one child under 18 → the last registration matches (200 with the matching people). Introduces the in-memory store and the plain matcher.
 3. The same family, all children 18 or older → nobody matches. Introduces the injected clock.
 4. One child has a different second parent → nobody matches. Two and four children as unit tests ("exactly 3").
@@ -31,7 +31,7 @@ Done.
 - Does a child without a birth date count as under 18?
 - Conflicting parents: a child's own record names two parents, and a third person names it as a child. What wins?
 - "All matching people": only the people who match, or also their partners and children?
-- Response body of 444: empty or not?
+- Response body of 444: **decided**, no body (scenario 1).
 
 ## Performance (measure first)
 

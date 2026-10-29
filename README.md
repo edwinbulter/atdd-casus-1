@@ -2,7 +2,7 @@
 
 A Spring Boot service for the casus "[Three-Kid Family Challenge](doc/casus.md)", built with **acceptance test-driven development (ATDD)** as described by Dave Farley in *Modern Software Engineering* and *Continuous Delivery*, and with **automated quality assurance**: design rules are enforced by tests in the pipeline, not by review afterwards.
 
-> **Status:** step 0, the walking skeleton. The service reports the version it was built from (`GET /api/version`), checked by an acceptance scenario against the Docker image of that build. The guardrails ([ADR 0002](doc/adr/0002-guardrails-as-archunit-tests.md)) run in the commit stage; each one has been seen red once. The pipeline in GitHub Actions is green, and has been seen red once (a failing commit stage skips the acceptance stage). Next: the first matching scenario.
+> **Status:** step 0, the walking skeleton. The service reports the version it was built from (`GET /api/version`), checked by an acceptance scenario against the Docker image of that build. The guardrails ([ADR 0002](doc/adr/0002-guardrails-as-archunit-tests.md)) run in the commit stage; each one has been seen red once. The pipeline in GitHub Actions is green, and has been seen red once (a failing commit stage skips the acceptance stage). Phase 1 has started: registering a single person without a family answers **444** without a body. Next: a complete three-kid family that matches.
 
 ## Getting started
 

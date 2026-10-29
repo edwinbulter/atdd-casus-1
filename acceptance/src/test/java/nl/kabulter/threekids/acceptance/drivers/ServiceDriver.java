@@ -7,6 +7,8 @@ public interface ServiceDriver extends AutoCloseable {
 
     String runningVersion();
 
+    RegistrationAnswer register(PersonRecord person);
+
     @Override
     void close();
 }

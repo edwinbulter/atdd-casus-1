@@ -6,13 +6,19 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import nl.kabulter.threekids.acceptance.drivers.PersonRecord;
+import nl.kabulter.threekids.acceptance.drivers.RegistrationAnswer;
 import nl.kabulter.threekids.acceptance.drivers.ServiceDriver;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Talks to the service over its public HTTP API.
  */
 public class HttpServiceDriver implements ServiceDriver {
+
+    /** The casus answers "nobody matches yet" with HTTP 444 No Response. */
+    private static final int NO_RESPONSE = 444;
 
     private final HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     private final JsonMapper json = JsonMapper.builder().build();
@@ -35,6 +41,27 @@ public class HttpServiceDriver implements ServiceDriver {
             throw new IllegalStateException("GET /api/version returned " + response.statusCode() + ": " + response.body());
         }
         return json.readTree(response.body()).path("version").asString();
+    }
+
+    @Override
+    public RegistrationAnswer register(PersonRecord person) {
+        HttpResponse<String> response = send(HttpRequest.newBuilder(baseUri.resolve("/api/v1/people"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(toJson(person))))
+                .build());
+        if (response.statusCode() == NO_RESPONSE && response.body().isEmpty()) {
+            return RegistrationAnswer.nobodyMatchesYet();
+        }
+        throw new IllegalStateException(
+                "POST /api/v1/people returned " + response.statusCode() + ": " + response.body());
+    }
+
+    private ObjectNode toJson(PersonRecord person) {
+        ObjectNode node = json.createObjectNode();
+        node.put("id", person.id());
+        node.put("name", person.name());
+        node.put("birthDate", person.birthDate().toString());
+        return node;
     }
 
     private HttpResponse<String> send(HttpRequest request) {
