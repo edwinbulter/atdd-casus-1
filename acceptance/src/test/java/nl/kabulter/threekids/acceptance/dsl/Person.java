@@ -1,16 +1,22 @@
 package nl.kabulter.threekids.acceptance.dsl;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import nl.kabulter.threekids.acceptance.drivers.PersonRecord;
 
 /**
- * A person as the scenarios describe it, built step by step.
+ * A person as the scenarios describe it, built step by step. Relations refer to other people by their ID.
  */
 public final class Person {
 
     private final String name;
     private long id;
     private LocalDate birthDate;
+    private Long parent1;
+    private Long parent2;
+    private Long partner;
+    private List<Long> children = List.of();
 
     private Person(String name) {
         this.name = name;
@@ -30,7 +36,23 @@ public final class Person {
         return this;
     }
 
+    public Person withParents(Person first, Person second) {
+        this.parent1 = first.id;
+        this.parent2 = second.id;
+        return this;
+    }
+
+    public Person withPartner(Person partner) {
+        this.partner = partner.id;
+        return this;
+    }
+
+    public Person withChildren(Person... children) {
+        this.children = Arrays.stream(children).map(child -> child.id).toList();
+        return this;
+    }
+
     PersonRecord toRecord() {
-        return new PersonRecord(id, name, birthDate);
+        return new PersonRecord(id, name, birthDate, parent1, parent2, partner, children);
     }
 }

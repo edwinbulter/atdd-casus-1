@@ -1,6 +1,8 @@
 package nl.kabulter.threekids.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDate;
+import java.util.List;
 import nl.kabulter.threekids.application.PeopleService;
 import nl.kabulter.threekids.domain.Person;
 import org.springframework.http.ResponseEntity;
@@ -21,15 +23,40 @@ class PeopleController {
     }
 
     @PostMapping("/api/v1/people")
-    ResponseEntity<Void> register(@RequestBody PersonRequest request) {
-        people.register(request.toPerson());
-        return ResponseEntity.status(NO_RESPONSE).build();
+    ResponseEntity<List<PersonJson>> register(@RequestBody PersonJson request) {
+        List<Person> matching = people.register(request.toPerson());
+        if (matching.isEmpty()) {
+            return ResponseEntity.status(NO_RESPONSE).build();
+        }
+        return ResponseEntity.ok(matching.stream().map(PersonJson::from).toList());
     }
 
-    record PersonRequest(long id, String name, LocalDate birthDate) {
+    /** A person record as the API receives and returns it; relations are references like {@code { "id": 7 }}. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record PersonJson(
+            long id, String name, LocalDate birthDate,
+            Reference parent1, Reference parent2, Reference partner, List<Reference> children) {
+
+        static PersonJson from(Person person) {
+            return new PersonJson(person.id(), person.name(), person.birthDate(),
+                    Reference.to(person.parent1()), Reference.to(person.parent2()), Reference.to(person.partner()),
+                    person.children().stream().map(Reference::new).toList());
+        }
 
         Person toPerson() {
-            return new Person(id, name, birthDate);
+            return new Person(id, name, birthDate, Reference.idOf(parent1), Reference.idOf(parent2),
+                    Reference.idOf(partner), children == null ? List.of() : children.stream().map(Reference::id).toList());
+        }
+    }
+
+    record Reference(long id) {
+
+        static Reference to(Long id) {
+            return id == null ? null : new Reference(id);
+        }
+
+        static Long idOf(Reference reference) {
+            return reference == null ? null : reference.id();
         }
     }
 }

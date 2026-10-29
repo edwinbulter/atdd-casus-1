@@ -6,10 +6,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import nl.kabulter.threekids.acceptance.drivers.PersonRecord;
 import nl.kabulter.threekids.acceptance.drivers.RegistrationAnswer;
 import nl.kabulter.threekids.acceptance.drivers.ServiceDriver;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
@@ -52,6 +57,13 @@ public class HttpServiceDriver implements ServiceDriver {
         if (response.statusCode() == NO_RESPONSE && response.body().isEmpty()) {
             return RegistrationAnswer.nobodyMatchesYet();
         }
+        if (response.statusCode() == 200) {
+            List<PersonRecord> matching = new ArrayList<>();
+            json.readTree(response.body()).forEach(node -> matching.add(fromJson(node)));
+            if (!matching.isEmpty()) {
+                return new RegistrationAnswer(matching);
+            }
+        }
         throw new IllegalStateException(
                 "POST /api/v1/people returned " + response.statusCode() + ": " + response.body());
     }
@@ -61,7 +73,39 @@ public class HttpServiceDriver implements ServiceDriver {
         node.put("id", person.id());
         node.put("name", person.name());
         node.put("birthDate", person.birthDate().toString());
+        putReference(node, "parent1", person.parent1());
+        putReference(node, "parent2", person.parent2());
+        putReference(node, "partner", person.partner());
+        ArrayNode children = node.putArray("children");
+        person.children().forEach(child -> children.addObject().put("id", child));
         return node;
+    }
+
+    private static void putReference(ObjectNode node, String field, Long id) {
+        if (id != null) {
+            node.putObject(field).put("id", id);
+        }
+    }
+
+    private static PersonRecord fromJson(JsonNode node) {
+        List<Long> children = new ArrayList<>();
+        node.path("children").forEach(child -> children.add(child.path("id").asLong()));
+        return new PersonRecord(
+                node.path("id").asLong(),
+                textOrNull(node.path("name")),
+                node.path("birthDate").isString() ? LocalDate.parse(node.path("birthDate").asString()) : null,
+                referenceOrNull(node.path("parent1")),
+                referenceOrNull(node.path("parent2")),
+                referenceOrNull(node.path("partner")),
+                children);
+    }
+
+    private static String textOrNull(JsonNode node) {
+        return node.isString() ? node.asString() : null;
+    }
+
+    private static Long referenceOrNull(JsonNode node) {
+        return node.path("id").isNumber() ? node.path("id").asLong() : null;
     }
 
     private HttpResponse<String> send(HttpRequest request) {

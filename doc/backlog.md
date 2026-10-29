@@ -12,9 +12,10 @@ Done.
 ## Phase 1 – matching
 
 1. **Done** (`MatchingScenarios.aSinglePersonWithoutAFamilyDoesNotMatch`): a single unknown person is registered → nobody matches (444, without a body).
-2. A complete family through successive registrations: a parent with a partner and three children, both parents on every child, one child under 18 → the last registration matches (200 with the matching people). Introduces the in-memory store and the plain matcher.
+2. **Done** (`MatchingScenarios.partnersWithThreeChildrenOneOfThemUnder18Match`, ADR 0005, ADR 0006): Homer and Marge, each with an own record naming the other as partner and the three children, and the three children with both parents; the last registration answers 200 with Homer and Marge and everything in their records. So far the pattern only checks a partner and exactly three children (also unit tests for two and four children).
+   - **Next, split off:** Homer known only by ID (Marge names him as partner, the children as parent) also matches, with the derived partner and children. Decided: such a person can match (casus: "you might not know their name or birthdate yet"). Goes with item 5.
 3. The same family, all children 18 or older → nobody matches. Introduces the injected clock.
-4. One child has a different second parent → nobody matches. Two and four children as unit tests ("exactly 3").
+4. One child has a different second parent → nobody matches. (Two and four children: done as unit tests with scenario 2.)
 5. Bidirectional integrity: the parent names the child but the child does not name the parent, and the reverse → repaired, the family matches.
 6. Update (idempotent on the ID): registering a known ID again replaces the old data; registering the same record twice gives the same state; a match can disappear.
 7. The response holds everything known about the matching people, also when name or birth date are unknown.
@@ -27,10 +28,11 @@ Done.
 ## Domain questions (⛔ decided per scenario, not up front)
 
 - Is the partner link symmetric: if A names B, is B's partner A?
+- Can a person known only by ID match? **Decided:** yes (see item 2, next).
 - Does a child known only by ID count toward "exactly 3"?
 - Does a child without a birth date count as under 18?
 - Conflicting parents: a child's own record names two parents, and a third person names it as a child. What wins?
-- "All matching people": only the people who match, or also their partners and children?
+- "All matching people": **decided**, only the people who match; the body is a JSON array of their records, in the format of the POST (scenario 2).
 - Response body of 444: **decided**, no body (scenario 1).
 
 ## Performance (measure first)

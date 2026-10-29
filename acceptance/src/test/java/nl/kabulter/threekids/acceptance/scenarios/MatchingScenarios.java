@@ -2,6 +2,7 @@ package nl.kabulter.threekids.acceptance.scenarios;
 
 import static nl.kabulter.threekids.acceptance.dsl.Person.person;
 
+import nl.kabulter.threekids.acceptance.dsl.Person;
 import nl.kabulter.threekids.acceptance.dsl.Registry;
 import org.junit.jupiter.api.AutoClose;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,12 @@ class MatchingScenarios {
 
     @AutoClose
     private final Registry registry = Registry.withNobodyRegistered();
+
+    private final Person homer = person("Homer").withId(1).bornOn("1956-05-12");
+    private final Person marge = person("Marge").withId(2).bornOn("1956-10-01");
+    private final Person bart = person("Bart").withId(3).bornOn("2015-04-01");
+    private final Person lisa = person("Lisa").withId(4).bornOn("2017-05-09");
+    private final Person maggie = person("Maggie").withId(5).bornOn("2023-01-12");
 
     @Test
     void aSinglePersonWithoutAFamilyDoesNotMatch() {
@@ -20,5 +27,22 @@ class MatchingScenarios {
 
         // Then nobody matches yet
         registry.answersThatNobodyMatchesYet();
+    }
+
+    @Test
+    void partnersWithThreeChildrenOneOfThemUnder18Match() {
+        // Given Homer and Marge are registered as partners, each with the children Bart, Lisa and Maggie
+        registry.registers(homer.withPartner(marge).withChildren(bart, lisa, maggie));
+        registry.registers(marge.withPartner(homer).withChildren(bart, lisa, maggie));
+
+        // And Bart and Lisa are registered, each with the parents Homer and Marge
+        registry.registers(bart.withParents(homer, marge));
+        registry.registers(lisa.withParents(homer, marge));
+
+        // When Maggie is registered with the parents Homer and Marge
+        registry.registers(maggie.withParents(homer, marge));
+
+        // Then Homer and Marge match, with everything known about them
+        registry.answersThatTheMatchingPeopleAre(homer, marge);
     }
 }
