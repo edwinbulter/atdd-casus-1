@@ -13,7 +13,7 @@ Two questions follow:
 Decided with the user: people known only by ID are candidates, and the partner link is symmetric, with the own record winning.
 
 ## Decision
-- `People.everyone()` returns the people with a record, plus everyone else that a record refers to (as parent, partner or child), as a person with only an ID.
+- The candidates are the people with a record, plus everyone else that a record refers to (as parent, partner or child), as a person with only an ID. (This was `People.everyone()`; since ADR 0011 only the people a registration affects are checked, and this full list lives in the oracle of `FamilyRegisterPropertyTests`.)
 - `People.partnerOf(person)`: the partner in the person's own record; without one, the person who names this person as partner. When several people name the same person, the one with the lowest ID counts.
 - `People.asKnown(person)` shows that partner, next to the children of ADR 0009.
 - A second index, from a person to the person who names them as partner, is built in the same way as the children index: once per registration, O(n).
@@ -24,5 +24,5 @@ Decided with the user: people known only by ID are candidates, and the partner l
 - When two people name the same person as partner and that person names nobody, the lowest ID wins; this choice has no scenario or unit test yet.
 
 ## Guard
-- `PeopleTests`: `everyoneIncludesThePeopleKnownOnlyById`, `aPersonWithoutAPartnerInTheOwnRecordHasThePersonWhoNamesThemAsPartner`, `aPartnerInTheOwnRecordWins`, `aPersonAsKnownHasThePartnerWhoNamesThem`; each seen red by sabotage.
+- `PeopleTests`: `aPersonWithoutAPartnerInTheOwnRecordHasThePersonWhoNamesThemAsPartner`, `aPartnerInTheOwnRecordWins`, `aPersonAsKnownHasThePartnerWhoNamesThem`; each seen red by sabotage.
 - `ThreeKidFamilyTests.aPersonKnownOnlyByIdMatchesThroughThePartnerWhoNamesThem`, `PeopleServiceTests.aPersonKnownOnlyByIdMatchesWithWhatTheOthersSayAboutThem` and `IntegrityScenarios.aPersonKnownOnlyByIdMatchesWithEverythingKnownAboutThem`.

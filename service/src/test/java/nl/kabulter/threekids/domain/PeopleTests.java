@@ -42,15 +42,6 @@ class PeopleTests {
     }
 
     @Test
-    void everyoneIncludesThePeopleKnownOnlyById() {
-        Person marge = new Person(2, "Marge", LocalDate.of(1956, 10, 1), null, null, 1L, List.of(3L));
-        People people = People.of(List.of(marge, child(3, 1L, 2L)));
-
-        assertThat(people.everyone()).containsExactlyInAnyOrder(
-                marge, child(3, 1L, 2L), new Person(1, null, null));
-    }
-
-    @Test
     void aPersonWithoutAPartnerInTheOwnRecordHasThePersonWhoNamesThemAsPartner() {
         Person homerWithoutPartner = new Person(1, "Homer", homer.birthDate());
         People people = People.of(List.of(homerWithoutPartner, partnerNaming(1)));

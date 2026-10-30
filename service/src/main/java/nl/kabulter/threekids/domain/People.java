@@ -1,7 +1,6 @@
 package nl.kabulter.threekids.domain;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -35,39 +34,38 @@ public final class People {
     }
 
     /**
-     * Stores the record without references to deleted IDs, replacing an earlier record with the same ID; returns that
-     * earlier record, or null. The caller ignores the record of a deleted ID ({@link #isDeleted}).
+     * Stores the record without references to deleted IDs, replacing an earlier record with the same ID, and returns
+     * the people whose match can change. The record of a deleted ID is ignored (ADR 0014).
      */
-    public Person put(Person person) {
+    public Set<Long> put(Person person) {
+        if (deleted.contains(person.id())) {
+            return Set.of();
+        }
         Person stored = person.withoutReferencesTo(deleted);
         Person earlier = byId.put(stored.id(), stored);
         if (earlier != null) {
             index(earlier, false);
         }
         index(stored, true);
-        return earlier;
-    }
-
-    /** Whether this ID was deleted: it is ignored forever, for storage and for matching. */
-    public boolean isDeleted(long id) {
-        return deleted.contains(id);
+        return affectedBy(earlier, stored);
     }
 
     /**
-     * The people whose match can change when {@code earlier} is replaced by {@code person}: the person, the people
-     * the old or new record names, and the people who name the person as partner or list the person as a child.
+     * The people whose match can change when {@code earlier} (or null) is replaced by {@code person}: the person, the
+     * people the old or new record names, and the people who name the person as partner or list the person as a child.
      */
-    public Set<Long> affectedBy(Person earlier, Person person) {
+    private Set<Long> affectedBy(Person earlier, Person person) {
         Set<Long> affected = new HashSet<>();
         affected.add(person.id());
-        Stream.of(earlier, person)
-                .filter(Objects::nonNull)
-                .flatMap(record -> Stream.of(record.parent1(), record.parent2(), record.partner()))
-                .filter(Objects::nonNull)
-                .forEach(affected::add);
+        Stream.of(earlier, person).filter(Objects::nonNull).flatMap(People::named).forEach(affected::add);
         affected.addAll(partnerNaming.getOrDefault(person.id(), new TreeSet<>()));
         affected.addAll(listingAsChild.getOrDefault(person.id(), new TreeSet<>()));
         return affected;
+    }
+
+    /** The people this record names as parent or partner. */
+    private static Stream<Long> named(Person record) {
+        return Stream.of(record.parent1(), record.parent2(), record.partner()).filter(Objects::nonNull);
     }
 
     /**
@@ -83,32 +81,16 @@ public final class People {
         Person record = byId.remove(id);
         if (record != null) {
             index(record, false);
-            affected.addAll(affectedBy(record, record));
+            named(record).forEach(affected::add);
         }
         Set<Long> referring = new TreeSet<>();
         referring.addAll(childrenNamingParent.getOrDefault(id, new TreeSet<>()));
         referring.addAll(partnerNaming.getOrDefault(id, new TreeSet<>()));
         referring.addAll(listingAsChild.getOrDefault(id, new TreeSet<>()));
         for (long other : referring) {
-            Person earlier = put(byId.get(other));
-            affected.addAll(affectedBy(earlier, byId.get(other)));
+            affected.addAll(put(byId.get(other)));
         }
-        affected.remove(id);
         return affected;
-    }
-
-    /** Everyone the pattern considers: the people with a record, and the people only known by ID from others. */
-    public List<Person> everyone() {
-        List<Person> records = byId.values().stream().sorted(Comparator.comparingLong(Person::id)).toList();
-        Stream<Person> knownOnlyById = records.stream()
-                .flatMap(person -> Stream.concat(
-                        Stream.of(person.parent1(), person.parent2(), person.partner()), person.children().stream()))
-                .filter(Objects::nonNull)
-                .filter(id -> !byId.containsKey(id))
-                .distinct()
-                .sorted()
-                .map(id -> new Person(id, null, null));
-        return Stream.concat(records.stream(), knownOnlyById).toList();
     }
 
     /** The person's partner: the own record wins; without one, the person with the lowest ID who names this person. */

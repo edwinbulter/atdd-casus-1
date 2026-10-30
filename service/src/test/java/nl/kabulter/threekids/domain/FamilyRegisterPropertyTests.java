@@ -8,7 +8,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.Combinators;
@@ -73,17 +75,29 @@ class FamilyRegisterPropertyTests {
     }
 
     private static List<Person> checkingEveryone(Map<Long, Person> lastRecords) {
-        People everyone = People.of(lastRecords.values());
-        return everyone.everyone().stream()
-                .filter(candidate -> ThreeKidFamily.matches(candidate, everyone, TODAY))
-                .map(everyone::asKnown)
+        People people = People.of(lastRecords.values());
+        return everyone(lastRecords).stream()
+                .filter(candidate -> ThreeKidFamily.matches(candidate, people, TODAY))
+                .map(people::asKnown)
                 .toList();
     }
 
+    /** The people with a record, and everyone else a record refers to, as a person with only an ID (ADR 0010). */
+    private static List<Person> everyone(Map<Long, Person> lastRecords) {
+        Stream<Person> knownOnlyById = lastRecords.values().stream()
+                .flatMap(person -> Stream.concat(
+                        Stream.of(person.parent1(), person.parent2(), person.partner()), person.children().stream()))
+                .filter(Objects::nonNull)
+                .filter(id -> !lastRecords.containsKey(id))
+                .distinct()
+                .map(id -> new Person(id, null, null));
+        return Stream.concat(lastRecords.values().stream(), knownOnlyById).toList();
+    }
+
     /**
-     * Registrations over a few IDs, and now and then a delete: mostly members of one family (parents 1 and 2, children 3, 4 and 5) with some
-     * relations left out or changed, and some random records, so registrations often update, contradict and complete
-     * each other, and families often match.
+     * Registrations over a few IDs, and now and then a delete: mostly members of one family (parents 1 and 2, children
+     * 3, 4 and 5) with some relations left out or changed, and some random records, so registrations often update,
+     * contradict and complete each other, and families often match.
      */
     @Provide
     Arbitrary<List<Step>> steps() {

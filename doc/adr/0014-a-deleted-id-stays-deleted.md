@@ -12,7 +12,7 @@ Decided with the user: both are ignored. The registration of a deleted ID change
 
 ## Decision
 - `People` remembers the deleted IDs.
-- `FamilyRegister.register` ignores the registration of a deleted ID silently: nothing is stored or checked, and the answer is who matches now (200 or 444, as for any POST).
+- `People.put` ignores the registration of a deleted ID silently, at the door: nothing is stored or checked, and the answer is who matches now (200 or 444, as for any POST).
 - `People.put` stores every record without its references to deleted IDs (`Person.withoutReferencesTo`). The DELETE of ADR 0013 uses the same `put` to clean up the records that referred to the ID, so the clean-up is in one place.
 
 ## Consequences

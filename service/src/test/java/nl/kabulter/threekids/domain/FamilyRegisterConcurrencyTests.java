@@ -36,10 +36,7 @@ class FamilyRegisterConcurrencyTests {
             familyMembers(family).forEach(member -> mutations.add(() -> register.register(member, TODAY)));
             if (losesAChild(family)) {
                 List<Long> child = List.of(firstChildOf(family));
-                mutations.add(() -> {
-                    register.delete(child, TODAY);
-                    return null;
-                });
+                mutations.add(Executors.callable(() -> register.delete(child, TODAY)));
             }
         }
         Collections.shuffle(mutations, new Random(42));

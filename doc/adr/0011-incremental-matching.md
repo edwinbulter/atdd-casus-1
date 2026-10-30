@@ -24,7 +24,7 @@ That is usually only a handful of people. The service only checks them.
 
 ## Decision
 - **Remember who matches.** `FamilyRegister` (domain) keeps the set of people who match now.
-- **Per POST, check only:** the people the record can affect (`People.affectedBy(earlier, person)`), plus the people who match now. Those are checked again because time can end their match; they are all in the answer anyway, as the casus asks for every matching person. The check itself is the same `ThreeKidFamily.matches` as before.
+- **Per POST, check only:** the people the record can affect, which `People.put` returns (computed by its helper `affectedBy`), plus the people who match now. Those are checked again because time can end their match; they are all in the answer anyway, as the casus asks for every matching person. The check itself is the same `ThreeKidFamily.matches` as before.
 - **Update the lookup lists instead of rebuilding them.** `People` keeps its lookup lists ("who names Homer as parent?", "who names Marge as partner?", "who lists Bart as a child?") up to date on every POST: the old record out, the new one in. This amends ADR 0009 and ADR 0010 on how the lists are built, not on what they mean.
 - **One POST at a time.** So that two POSTs at the same moment do not mix up the lists, `FamilyRegister` works behind a lock (`ReentrantLock`), close to the state it guards; no `synchronized` (guardrail).
 

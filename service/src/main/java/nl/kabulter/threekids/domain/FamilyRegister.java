@@ -42,10 +42,7 @@ public final class FamilyRegister {
     public List<Person> register(Person person, LocalDate today) {
         lock.lock();
         try {
-            if (!people.isDeleted(person.id())) {
-                Person earlier = people.put(person);
-                check(people.affectedBy(earlier, people.get(person.id())), today);
-            }
+            check(people.put(person), today);
             return matching.stream().map(id -> people.asKnown(people.recordOrId(id))).toList();
         } finally {
             lock.unlock();
@@ -58,8 +55,6 @@ public final class FamilyRegister {
         try {
             Set<Long> affected = new HashSet<>();
             ids.forEach(id -> affected.addAll(people.delete(id)));
-            matching.removeAll(ids);
-            affected.removeAll(ids);
             check(affected, today);
         } finally {
             lock.unlock();
