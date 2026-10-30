@@ -36,4 +36,5 @@ This amends ADR 0008 on one point: the store keeps every record as it was posted
 
 ## Guard
 - `FamilyRegisterTests`: `aDeletedChildNoLongerCounts`, `aDeletedPersonDoesNotMatchAsAPersonKnownOnlyById`, `deletingAFourthChildCanMakeAFamilyMatch` and `deletingTheSameIdTwiceChangesNothing`; the first three seen red by sabotage (references left in place, no check after a delete, the record left in place).
+- `FamilyRegisterTests.deletingAFourthChildCanMakeAFamilyMatchWhenTheParentsDoNotListTheirChildren`: the people the deleted record names are checked too, also when nobody refers to the deleted ID (seen red by sabotage: leaving them out of the people to check).
 - `PeopleControllerTests.deletesTheIdsInTheBodyAndAnswers204` and `DeletionScenarios.aDeletedPersonNoLongerCountsForMatching` (the driver sends the IDs as a JSON body).

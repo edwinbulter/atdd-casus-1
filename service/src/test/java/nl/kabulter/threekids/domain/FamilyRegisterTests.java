@@ -80,6 +80,19 @@ class FamilyRegisterTests {
     }
 
     @Test
+    void deletingAFourthChildCanMakeAFamilyMatchWhenTheParentsDoNotListTheirChildren() {
+        register.register(new Person(1, "Homer", TODAY.minusYears(40), null, null, 2L, List.of()), TODAY);
+        register.register(new Person(2, "Marge", TODAY.minusYears(40), null, null, 1L, List.of()), TODAY);
+        for (long child = 3; child <= 6; child++) {
+            register.register(new Person(child, "Child " + child, TODAY.minusYears(10), 1L, 2L, null, List.of()), TODAY);
+        }
+
+        register.delete(List.of(6L), TODAY);
+
+        assertThat(register.register(ADA, TODAY)).extracting(Person::id).containsExactlyInAnyOrder(1L, 2L);
+    }
+
+    @Test
     void aDeletedIdThatIsRegisteredAgainIsIgnored() {
         registerTheFamily();
         register.delete(List.of(4L), TODAY);
