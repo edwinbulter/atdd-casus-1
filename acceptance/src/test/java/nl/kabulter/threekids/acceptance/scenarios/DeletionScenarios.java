@@ -46,4 +46,16 @@ class DeletionScenarios {
         // Then nobody matches yet: Homer and Marge have only two children left
         registry.answersThatNobodyMatchesYet();
     }
+
+    @Test
+    void aDeletedPersonWhoIsRegisteredAgainIsIgnored() {
+        // Given the family of Homer and Marge matches, and Lisa is deleted
+        registry.deletes(lisa);
+
+        // When Lisa is registered again with her old record
+        registry.registers(lisa);
+
+        // Then nobody matches yet: Lisa's registration is ignored
+        registry.answersThatNobodyMatchesYet();
+    }
 }

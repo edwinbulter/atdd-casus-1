@@ -2,6 +2,7 @@ package nl.kabulter.threekids.domain;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
  * One person record, as registered. Relations refer to other people by their ID and may be {@code null}
@@ -29,14 +30,14 @@ public record Person(
         return children.contains(child);
     }
 
-    /** This record without any reference to the given person, as if that person never existed. */
-    public Person withoutReferenceTo(long other) {
-        return new Person(id, name, birthDate, other(parent1, other), other(parent2, other), other(partner, other),
-                children.stream().filter(child -> child != other).toList());
+    /** This record without any reference to the given people, as if they never existed. */
+    public Person withoutReferencesTo(Set<Long> gone) {
+        return new Person(id, name, birthDate, unless(parent1, gone), unless(parent2, gone), unless(partner, gone),
+                children.stream().filter(child -> !gone.contains(child)).toList());
     }
 
-    private static Long other(Long reference, long other) {
-        return reference != null && reference == other ? null : reference;
+    private static Long unless(Long reference, Set<Long> gone) {
+        return reference != null && gone.contains(reference) ? null : reference;
     }
 
     /** A person without known relations. */

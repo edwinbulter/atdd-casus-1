@@ -2,12 +2,12 @@
 
 A Spring Boot service for the casus "[Three-Kid Family Challenge](doc/casus.md)", built with **acceptance test-driven development (ATDD)** as described by Dave Farley in *Modern Software Engineering* and *Continuous Delivery*, and with **automated quality assurance**: design rules are enforced by tests in the pipeline, not by review afterwards.
 
-> **Status:** phase 1 is complete, phase 2 is in progress.
+> **Status:** phase 1 and phase 2 are complete.
 > - **Walking skeleton:** the service reports the version it was built from; the pipeline tests exactly that image, and has been seen red once.
 > - **Guardrails:** ArchUnit rules and a source scan in the commit stage ([ADR 0002](doc/adr/0002-guardrails-as-archunit-tests.md)), each seen red once.
 > - **Matching (phase 1):** 444 without a body when nobody matches, 200 with everything known about the matching people otherwise. A partner, exactly three children who all name that partner as parent, one child under 18 today in Europe/Amsterdam ([ADR 0007](doc/adr/0007-today-is-the-date-in-amsterdam-from-an-injected-clock.md)). Bidirectional integrity: missing parents, children and partners are derived from the other records; when records conflict, the own record wins ([ADR 0008](doc/adr/0008-relations-are-repaired-when-matching-not-when-storing.md), [0009](doc/adr/0009-the-answer-shows-the-children-who-name-a-person.md), [0010](doc/adr/0010-people-known-only-by-id-can-match-with-a-symmetric-partner.md)). A person known only by ID can match. Posting a known ID again replaces the old record.
 > - **Performance:** incremental matching, about 12 µs per registration with 100,000 people stored ([ADR 0011](doc/adr/0011-incremental-matching.md), see Performance).
-> - **Delete (phase 2):** `DELETE /api/v1/people` answers 204; deleted IDs are removed from every record that refers to them ([ADR 0013](doc/adr/0013-a-deleted-id-is-removed-from-every-record.md)). Next: a later registration of a deleted ID is ignored.
+> - **Delete (phase 2):** `DELETE /api/v1/people` answers 204; deleted IDs are removed from every record that refers to them ([ADR 0013](doc/adr/0013-a-deleted-id-is-removed-from-every-record.md)) and stay deleted: a later registration of a deleted ID is ignored, and new references to it are removed ([ADR 0014](doc/adr/0014-a-deleted-id-stays-deleted.md)).
 
 ## Getting started
 

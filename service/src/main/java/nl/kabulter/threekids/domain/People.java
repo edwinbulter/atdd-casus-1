@@ -25,6 +25,7 @@ public final class People {
     private final Map<Long, NavigableSet<Long>> childrenNamingParent = new HashMap<>();
     private final Map<Long, NavigableSet<Long>> partnerNaming = new HashMap<>();
     private final Map<Long, NavigableSet<Long>> listingAsChild = new HashMap<>();
+    private final Set<Long> deleted = new HashSet<>();
 
     /** The people with these records, as if they were registered in this order. */
     public static People of(Collection<Person> records) {
@@ -33,14 +34,23 @@ public final class People {
         return people;
     }
 
-    /** Stores the record, replacing an earlier record with the same ID; returns that earlier record, or null. */
+    /**
+     * Stores the record without references to deleted IDs, replacing an earlier record with the same ID; returns that
+     * earlier record, or null. The caller ignores the record of a deleted ID ({@link #isDeleted}).
+     */
     public Person put(Person person) {
-        Person earlier = byId.put(person.id(), person);
+        Person stored = person.withoutReferencesTo(deleted);
+        Person earlier = byId.put(stored.id(), stored);
         if (earlier != null) {
             index(earlier, false);
         }
-        index(person, true);
+        index(stored, true);
         return earlier;
+    }
+
+    /** Whether this ID was deleted: it is ignored forever, for storage and for matching. */
+    public boolean isDeleted(long id) {
+        return deleted.contains(id);
     }
 
     /**
@@ -61,10 +71,14 @@ public final class People {
     }
 
     /**
-     * Deletes the person with this ID: the record goes, and every record that refers to the person is stored again
-     * without that reference. Returns the people whose match can change.
+     * Deletes the person with this ID: the record goes, and every record that refers to the person is stored again,
+     * which removes the reference ({@link #put}); from now on the ID is ignored. Returns the people whose match can
+     * change.
      */
     public Set<Long> delete(long id) {
+        if (!deleted.add(id)) {
+            return Set.of();
+        }
         Set<Long> affected = new HashSet<>();
         Person record = byId.remove(id);
         if (record != null) {
@@ -76,10 +90,8 @@ public final class People {
         referring.addAll(partnerNaming.getOrDefault(id, new TreeSet<>()));
         referring.addAll(listingAsChild.getOrDefault(id, new TreeSet<>()));
         for (long other : referring) {
-            Person earlier = byId.get(other);
-            Person without = earlier.withoutReferenceTo(id);
-            put(without);
-            affected.addAll(affectedBy(earlier, without));
+            Person earlier = put(byId.get(other));
+            affected.addAll(affectedBy(earlier, byId.get(other)));
         }
         affected.remove(id);
         return affected;

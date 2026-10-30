@@ -35,12 +35,17 @@ public final class FamilyRegister {
         this.pattern = pattern;
     }
 
-    /** Registers the person, replacing an earlier record with the same ID, and returns everyone who matches today. */
+    /**
+     * Registers the person, replacing an earlier record with the same ID, and returns everyone who matches today. The
+     * registration of a deleted ID is ignored silently (ADR 0014).
+     */
     public List<Person> register(Person person, LocalDate today) {
         lock.lock();
         try {
-            Person earlier = people.put(person);
-            check(people.affectedBy(earlier, person), today);
+            if (!people.isDeleted(person.id())) {
+                Person earlier = people.put(person);
+                check(people.affectedBy(earlier, people.get(person.id())), today);
+            }
             return matching.stream().map(id -> people.asKnown(people.recordOrId(id))).toList();
         } finally {
             lock.unlock();

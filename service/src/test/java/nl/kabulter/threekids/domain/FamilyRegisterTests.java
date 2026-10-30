@@ -31,6 +31,13 @@ class FamilyRegisterTests {
     }
 
     @Test
+    void theFamilyMatches() {
+        registerTheFamily();
+
+        assertThat(register.register(ADA, TODAY)).extracting(Person::id).containsExactlyInAnyOrder(1L, 2L);
+    }
+
+    @Test
     void aDeletedChildNoLongerCounts() {
         registerTheFamily();
 
@@ -72,13 +79,41 @@ class FamilyRegisterTests {
         assertThat(register.register(ADA, TODAY)).extracting(Person::id).containsExactlyInAnyOrder(1L, 2L);
     }
 
+    @Test
+    void aDeletedIdThatIsRegisteredAgainIsIgnored() {
+        registerTheFamily();
+        register.delete(List.of(4L), TODAY);
+
+        assertThat(register.register(new Person(4, "Lisa", TODAY.minusYears(8), 1L, 2L, null, List.of()), TODAY))
+                .isEmpty();
+    }
+
+    @Test
+    void aNewRecordThatRefersToADeletedIdIsStoredWithoutThatReference() {
+        registerTheFamily();
+        register.delete(List.of(2L), TODAY);
+
+        registerTheFamily();
+
+        assertThat(register.register(ADA, TODAY)).isEmpty();
+    }
+
+    @Test
+    void aDeletedPersonCannotComeBackThroughTheOldReferencesOfOthers() {
+        registerTheFamily();
+        Person ned = new Person(6, "Ned", TODAY.minusYears(45), null, null, 2L, List.of());
+        register.register(ned, TODAY);
+        register.delete(List.of(2L), TODAY);
+
+        assertThat(register.register(ned, TODAY)).isEmpty();
+    }
+
     private void registerTheFamily() {
         List<Long> children = List.of(3L, 4L, 5L);
         register.register(new Person(1, "Homer", TODAY.minusYears(40), null, null, 2L, children), TODAY);
         register.register(new Person(2, "Marge", TODAY.minusYears(40), null, null, 1L, children), TODAY);
         register.register(new Person(3, "Bart", TODAY.minusYears(10), 1L, 2L, null, List.of()), TODAY);
         register.register(new Person(4, "Lisa", TODAY.minusYears(8), 1L, 2L, null, List.of()), TODAY);
-        assertThat(register.register(new Person(5, "Maggie", TODAY.minusYears(3), 1L, 2L, null, List.of()), TODAY))
-                .hasSize(2);
+        register.register(new Person(5, "Maggie", TODAY.minusYears(3), 1L, 2L, null, List.of()), TODAY);
     }
 }

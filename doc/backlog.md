@@ -27,7 +27,7 @@ Done.
 ## Phase 2 – purge and ignore list (only if there is time)
 
 1. **Done** (`DeletionScenarios.aDeletedPersonNoLongerCountsForMatching`, ADR 0013): delete IDs → they are gone and no longer count for matching, also not through references in other records. Deleting the same IDs again changes nothing. DELETE answers 204.
-2. A later registration of a deleted ID is ignored, for storage and for matching. Approved (8b): the family matches, Lisa is deleted; when Lisa is registered again with her old record → nobody matches. Decided: a new record that refers to a deleted ID is stored without that reference.
+2. **Done** (`DeletionScenarios.aDeletedPersonWhoIsRegisteredAgainIsIgnored`, ADR 0014): a later registration of a deleted ID is ignored, for storage and for matching. Approved (8b): the family matches, Lisa is deleted; when Lisa is registered again with her old record → nobody matches. Decided: a new record that refers to a deleted ID is stored without that reference.
 
 ## Domain questions (⛔ decided per scenario, not up front)
 
