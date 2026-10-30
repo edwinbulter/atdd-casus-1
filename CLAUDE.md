@@ -52,7 +52,7 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 | Four layers: scenarios speak only the DSL; drivers make no assertions | `FourLayerTests` | `acceptance/.../architecture/` |
 | The acceptance tests test the build that was just made | `ServiceVersionScenarios` | `acceptance/.../scenarios/` |
 | Simplest construct: matching is a stream filter over all people in memory; no incremental matching, sorting or indexes unless a measurement demands it (ADR) | review of the ADR + `make perf` (later) | – |
-| Mutations are idempotent: a POST of a known ID replaces, a DELETE of a deleted ID changes nothing | unit test + scenario per mutation | – |
+| Mutations are idempotent: a POST of a known ID replaces, a DELETE of a deleted ID changes nothing | POST: `PeopleServiceTests.registeringTheSameRecordAgainGivesTheSameAnswer`, `.aNewRecordForAKnownIdReplacesTheOldOne`, `UpdateScenarios`; DELETE: phase 2 | `application/`, `scenarios/` |
 
 **Target environment:** a local Docker container and the GitHub Actions runner. No Kubernetes.
 

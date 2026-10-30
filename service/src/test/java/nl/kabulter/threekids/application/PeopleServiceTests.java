@@ -60,6 +60,31 @@ class PeopleServiceTests {
         assertThat(matching).containsExactlyInAnyOrder(homer, marge);
     }
 
+    @Test
+    void registeringTheSameRecordAgainGivesTheSameAnswer() {
+        Person maggie = registerTheFamily();
+
+        assertThat(people.register(maggie)).containsExactlyInAnyOrder(homer, marge);
+    }
+
+    @Test
+    void aNewRecordForAKnownIdReplacesTheOldOne() {
+        registerTheFamily();
+
+        assertThat(people.register(new Person(4, "Lisa", LocalDate.of(2017, 5, 9), 1L, 6L, null, List.of()))).isEmpty();
+    }
+
+    /** Registers Homer, Marge and their three young children; returns the last one registered, Maggie. */
+    private Person registerTheFamily() {
+        people.register(homer);
+        people.register(marge);
+        people.register(child(3, "Bart", LocalDate.of(2015, 4, 1)));
+        people.register(child(4, "Lisa", LocalDate.of(2017, 5, 9)));
+        Person maggie = child(5, "Maggie", LocalDate.of(2023, 1, 12));
+        assertThat(people.register(maggie)).containsExactlyInAnyOrder(homer, marge);
+        return maggie;
+    }
+
     private static Person child(long id, String name, LocalDate birthDate) {
         return new Person(id, name, birthDate, 1L, 2L, null, List.of());
     }
