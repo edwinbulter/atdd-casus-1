@@ -3,22 +3,18 @@ package nl.kabulter.threekids.application;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import nl.kabulter.threekids.domain.People;
+import nl.kabulter.threekids.domain.FamilyRegister;
 import nl.kabulter.threekids.domain.Person;
-import nl.kabulter.threekids.domain.ThreeKidFamily;
 import org.springframework.stereotype.Service;
 
 /**
- * Registers people and tells who matches the three-kid family pattern after each registration. People are kept in
- * memory by ID, and every registration checks everyone (ADR 0005). The matching people are returned with everything
- * known about them, including the children who name them (ADR 0009).
+ * Registers people and tells who matches the three-kid family pattern after each registration, today according to
+ * the injected clock (ADR 0007). The matching people are returned with everything known about them.
  */
 @Service
 public class PeopleService {
 
-    private final Map<Long, Person> people = new ConcurrentHashMap<>();
+    private final FamilyRegister register = new FamilyRegister();
     private final Clock clock;
 
     public PeopleService(Clock clock) {
@@ -26,12 +22,6 @@ public class PeopleService {
     }
 
     public List<Person> register(Person person) {
-        people.put(person.id(), person);
-        LocalDate today = LocalDate.now(clock);
-        People everyone = People.of(people.values());
-        return everyone.everyone().stream()
-                .filter(candidate -> ThreeKidFamily.matches(candidate, everyone, today))
-                .map(everyone::asKnown)
-                .toList();
+        return register.register(person, LocalDate.now(clock));
     }
 }
