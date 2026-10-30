@@ -15,7 +15,7 @@ A Spring Boot service for the casus "[Three-Kid Family Challenge](doc/casus.md)"
 make help            # all targets
 make commit-stage    # unit, integration and architecture tests
 make acceptance      # build the image of this commit and run the scenarios against it (needs Docker)
-make run             # the service on http://localhost:8080
+make run             # the service on http://localhost:8080; then run doc/requests.http top to bottom
 ```
 
 ## What the service will do
