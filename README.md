@@ -38,6 +38,20 @@ The service receives person records, one per request, and after **each** record 
 
 The way of working is captured as [Claude Code skills](.claude/skills/): [`atdd`](.claude/skills/atdd/README.md) (the procedure, stop points and guardrails) and [`uitleg`](.claude/skills/uitleg/SKILL.md) (explains a part of the system).
 
+## Performance
+
+After every registration the service checks everyone with a plain filter ([ADR 0005](doc/adr/0005-people-in-memory-checked-with-a-plain-filter.md)): it sorts the records, builds the indexes for children and partners ([ADR 0009](doc/adr/0009-the-answer-shows-the-children-who-name-a-person.md), [ADR 0010](doc/adr/0010-people-known-only-by-id-can-match-with-a-symmetric-partner.md)) and filters all candidates. Measured first, before any optimisation.
+
+Measured with `make perf`: in-process (the application service, without HTTP), on an Apple M1 Max. The population consists of families of five (two partners, three children); in ten families a child is under 18, so 20 people match. Each row registers that many people one by one into an empty service.
+
+| People registered | Total | Average per registration | Average of the last 100 registrations |
+| ---: | ---: | ---: | ---: |
+| 1,000 | 0.5 s | 504 µs | 597 µs |
+| 5,000 | 4.8 s | 958 µs | 1,840 µs |
+| 10,000 | 18.9 s | 1,895 µs | 3,824 µs |
+
+The work of a registration grows linearly with the number of people stored: doubling the people doubles the time of the last registrations (O(n) per registration, O(n²) for a whole run). Extrapolated: about 38 ms per registration with 100,000 people stored, and about 0.4 s with a million.
+
 ## Tech stack
 
 Java 21, Spring Boot 4, Maven, Jib, JUnit 5, ArchUnit, Testcontainers and GitHub Actions.

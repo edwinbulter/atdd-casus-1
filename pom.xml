@@ -30,6 +30,9 @@
         <app.version>dev</app.version>
         <image.name>three-kids</image.name>
 
+        <!-- Measurements (tag perf) only run with make perf -->
+        <surefire.excludedGroups>perf</surefire.excludedGroups>
+
         <archunit.version>1.5.1</archunit.version>
         <jib-maven-plugin.version>3.5.2</jib-maven-plugin.version>
         <!-- Distroless Java 21, runs as non-root -->
@@ -49,6 +52,13 @@
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <excludedGroups>${surefire.excludedGroups}</excludedGroups>
+                    </configuration>
+                </plugin>
                 <plugin>
                     <groupId>com.google.cloud.tools</groupId>
                     <artifactId>jib-maven-plugin</artifactId>

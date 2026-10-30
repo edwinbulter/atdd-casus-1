@@ -25,6 +25,7 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 - Which version runs: `make version` (short commit hash, `-dirty` with uncommitted changes); `GET /api/version` on the running service.
 - Run the service: `make run` (http://localhost:8080) *(not yet verified)*.
 - Pipeline: `gh run list --limit 3` and `gh run watch <id> --exit-status`.
+- Measure the time per registration: `make perf` (tag `perf`, excluded from the commit stage; sizes with `PERF_SIZES=1000,10000`). The README holds the results.
 
 **Where things go**
 
