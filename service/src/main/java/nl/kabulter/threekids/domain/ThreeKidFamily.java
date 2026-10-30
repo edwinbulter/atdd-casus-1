@@ -2,7 +2,6 @@ package nl.kabulter.threekids.domain;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -25,12 +24,12 @@ public final class ThreeKidFamily {
     private ThreeKidFamily() {
     }
 
-    public static boolean matches(Person person, Map<Long, Person> people, LocalDate today) {
+    public static boolean matches(Person person, People people, LocalDate today) {
         if (person.partner() == null) {
             return false;
         }
         Person partner = people.get(person.partner());
-        List<Person> children = person.children().stream()
+        List<Person> children = people.childrenOf(person).stream()
                 .map(people::get)
                 .filter(Objects::nonNull)
                 .filter(child -> child.namesAsParent(person.id()) || child.emptyParentSlots() > 0)

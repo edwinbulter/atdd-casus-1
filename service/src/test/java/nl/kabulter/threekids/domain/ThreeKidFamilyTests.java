@@ -15,14 +15,14 @@ class ThreeKidFamilyTests {
     private static final LocalDate YOUNG = LocalDate.of(2015, 4, 1);
     private static final LocalDate ADULT = LocalDate.of(1980, 4, 1);
 
-    private final Map<Long, Person> people = new HashMap<>();
+    private final Map<Long, Person> records = new HashMap<>();
 
     @Test
     void aPersonWithAPartnerAndThreeChildrenMatches() {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
         registerChildren(YOUNG, YOUNG, YOUNG);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isTrue();
+        assertThat(matches(homer)).isTrue();
     }
 
     @Test
@@ -30,14 +30,14 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(null, List.of(3L, 4L, 5L)));
         registerChildren(YOUNG, YOUNG, YOUNG);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
     void aPersonWithoutChildrenDoesNotMatch() {
         Person homer = register(parent(2L, List.of()));
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -45,7 +45,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L)));
         registerChildren(YOUNG, YOUNG);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -53,7 +53,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L, 6L)));
         registerChildren(YOUNG, YOUNG, YOUNG, YOUNG);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -61,7 +61,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
         registerChildren(ADULT, ADULT, ADULT);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -69,7 +69,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
         registerChildren(ADULT, ADULT, YOUNG);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isTrue();
+        assertThat(matches(homer)).isTrue();
     }
 
     @Test
@@ -77,7 +77,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
         registerChildren(ADULT, ADULT, TODAY.minusYears(18));
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -85,7 +85,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
         registerChildren(ADULT, ADULT, TODAY.minusYears(18).plusDays(1));
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isTrue();
+        assertThat(matches(homer)).isTrue();
     }
 
     @Test
@@ -93,7 +93,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
         registerChildren(ADULT, ADULT, null);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -101,7 +101,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
         registerChildren(ADULT, ADULT);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -110,7 +110,7 @@ class ThreeKidFamilyTests {
         registerChildren(YOUNG, YOUNG, YOUNG);
         register(new Person(4, "Lisa", YOUNG, 1L, 6L, null, List.of()));
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -119,7 +119,7 @@ class ThreeKidFamilyTests {
         registerChildren(YOUNG, YOUNG, YOUNG);
         register(new Person(4, "Lisa", YOUNG, 1L, 6L, null, List.of()));
 
-        assertThat(ThreeKidFamily.matches(marge, people, TODAY)).isFalse();
+        assertThat(matches(marge)).isFalse();
     }
 
     @Test
@@ -127,7 +127,7 @@ class ThreeKidFamilyTests {
         Person homer = register(parent(2L, List.of(3L, 4L, 5L)));
         registerChildren(YOUNG, YOUNG);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -136,7 +136,7 @@ class ThreeKidFamilyTests {
         register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of(3L, 4L, 5L)));
         registerChildrenWithParents(null, null);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isTrue();
+        assertThat(matches(homer)).isTrue();
     }
 
     @Test
@@ -145,7 +145,7 @@ class ThreeKidFamilyTests {
         register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of(3L, 4L, 5L)));
         registerChildrenWithParents(1L, null);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isTrue();
+        assertThat(matches(homer)).isTrue();
     }
 
     @Test
@@ -154,7 +154,7 @@ class ThreeKidFamilyTests {
         register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of()));
         registerChildrenWithParents(1L, null);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
     }
 
     @Test
@@ -163,7 +163,16 @@ class ThreeKidFamilyTests {
         register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of(3L, 4L, 5L)));
         registerChildrenWithParents(6L, null);
 
-        assertThat(ThreeKidFamily.matches(homer, people, TODAY)).isFalse();
+        assertThat(matches(homer)).isFalse();
+    }
+
+    @Test
+    void aPersonWhoDoesNotListTheChildrenGetsThemFromTheChildrensRecords() {
+        Person homer = register(parent(2L, List.of()));
+        register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of()));
+        registerChildren(YOUNG, YOUNG, YOUNG);
+
+        assertThat(matches(homer)).isTrue();
     }
 
     private void registerChildrenWithParents(Long parent1, Long parent2) {
@@ -184,7 +193,11 @@ class ThreeKidFamilyTests {
     }
 
     private Person register(Person person) {
-        people.put(person.id(), person);
+        records.put(person.id(), person);
         return person;
+    }
+
+    private boolean matches(Person person) {
+        return ThreeKidFamily.matches(person, People.of(records.values()), TODAY);
     }
 }

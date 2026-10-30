@@ -5,13 +5,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import nl.kabulter.threekids.domain.People;
 import nl.kabulter.threekids.domain.Person;
 import nl.kabulter.threekids.domain.ThreeKidFamily;
 import org.springframework.stereotype.Service;
 
 /**
  * Registers people and tells who matches the three-kid family pattern after each registration. People are kept in
- * memory by ID, and every registration checks everyone (ADR 0005).
+ * memory by ID, and every registration checks everyone (ADR 0005). The matching people are returned with everything
+ * known about them, including the children who name them (ADR 0009).
  */
 @Service
 public class PeopleService {
@@ -26,6 +28,10 @@ public class PeopleService {
     public List<Person> register(Person person) {
         people.put(person.id(), person);
         LocalDate today = LocalDate.now(clock);
-        return people.values().stream().filter(candidate -> ThreeKidFamily.matches(candidate, people, today)).toList();
+        People everyone = People.of(people.values());
+        return people.values().stream()
+                .filter(candidate -> ThreeKidFamily.matches(candidate, everyone, today))
+                .map(everyone::asKnown)
+                .toList();
     }
 }

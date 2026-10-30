@@ -38,4 +38,22 @@ class IntegrityScenarios {
         // Then Homer and Marge match: the children's parents are repaired from Homer's and Marge's records
         registry.answersThatTheMatchingPeopleAre(homer, marge);
     }
+
+    @Test
+    void parentsWhoDoNotListTheirChildrenGetThemFromTheChildrensRecords() {
+        // Given Homer and Marge are registered as partners, without listing any children
+        registry.registers(homer.withPartner(marge));
+        registry.registers(marge.withPartner(homer));
+
+        // And Bart and Lisa are registered with the parents Homer and Marge
+        registry.registers(bart.withParents(homer, marge));
+        registry.registers(lisa.withParents(homer, marge));
+
+        // When Maggie is registered with the parents Homer and Marge
+        registry.registers(maggie.withParents(homer, marge));
+
+        // Then Homer and Marge match, each known with the children Bart, Lisa and Maggie from the children's records
+        registry.answersThatTheMatchingPeopleAre(
+                homer.withChildren(bart, lisa, maggie), marge.withChildren(bart, lisa, maggie));
+    }
 }

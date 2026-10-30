@@ -48,6 +48,18 @@ class PeopleServiceTests {
         assertThat(matching).isEmpty();
     }
 
+    @Test
+    void parentsWhoDoNotListTheirChildrenMatchWithTheChildrenFromTheChildrensRecords() {
+        people.register(new Person(1, "Homer", LocalDate.of(1956, 5, 12), null, null, 2L, List.of()));
+        people.register(new Person(2, "Marge", LocalDate.of(1956, 10, 1), null, null, 1L, List.of()));
+        people.register(child(3, "Bart", LocalDate.of(2015, 4, 1)));
+        people.register(child(4, "Lisa", LocalDate.of(2017, 5, 9)));
+
+        List<Person> matching = people.register(child(5, "Maggie", LocalDate.of(2023, 1, 12)));
+
+        assertThat(matching).containsExactlyInAnyOrder(homer, marge);
+    }
+
     private static Person child(long id, String name, LocalDate birthDate) {
         return new Person(id, name, birthDate, 1L, 2L, null, List.of());
     }
