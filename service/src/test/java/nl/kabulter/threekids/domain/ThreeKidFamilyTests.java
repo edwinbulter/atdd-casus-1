@@ -175,6 +175,14 @@ class ThreeKidFamilyTests {
         assertThat(matches(homer)).isTrue();
     }
 
+    @Test
+    void aPersonKnownOnlyByIdMatchesThroughThePartnerWhoNamesThem() {
+        register(new Person(2, "Marge", PARENT_BORN, null, null, 1L, List.of(3L, 4L, 5L)));
+        registerChildren(YOUNG, YOUNG, YOUNG);
+
+        assertThat(matches(new Person(1, null, null))).isTrue();
+    }
+
     private void registerChildrenWithParents(Long parent1, Long parent2) {
         for (long id = 3; id <= 5; id++) {
             register(new Person(id, "Child " + id, YOUNG, parent1, parent2, null, List.of()));

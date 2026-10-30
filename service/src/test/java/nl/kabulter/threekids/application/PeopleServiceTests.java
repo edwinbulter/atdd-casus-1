@@ -74,6 +74,18 @@ class PeopleServiceTests {
         assertThat(people.register(new Person(4, "Lisa", LocalDate.of(2017, 5, 9), 1L, 6L, null, List.of()))).isEmpty();
     }
 
+    @Test
+    void aPersonKnownOnlyByIdMatchesWithWhatTheOthersSayAboutThem() {
+        people.register(marge);
+        people.register(child(3, "Bart", LocalDate.of(2015, 4, 1)));
+        people.register(child(4, "Lisa", LocalDate.of(2017, 5, 9)));
+
+        List<Person> matching = people.register(child(5, "Maggie", LocalDate.of(2023, 1, 12)));
+
+        assertThat(matching).containsExactlyInAnyOrder(
+                marge, new Person(1, null, null, null, null, 2L, List.of(3L, 4L, 5L)));
+    }
+
     /** Registers Homer, Marge and their three young children; returns the last one registered, Maggie. */
     private Person registerTheFamily() {
         people.register(homer);

@@ -41,6 +41,43 @@ class PeopleTests {
         assertThat(people.asKnown(homer).children()).containsExactly(3L);
     }
 
+    @Test
+    void everyoneIncludesThePeopleKnownOnlyById() {
+        Person marge = new Person(2, "Marge", LocalDate.of(1956, 10, 1), null, null, 1L, List.of(3L));
+        People people = People.of(List.of(marge, child(3, 1L, 2L)));
+
+        assertThat(people.everyone()).containsExactlyInAnyOrder(
+                marge, child(3, 1L, 2L), new Person(1, null, null));
+    }
+
+    @Test
+    void aPersonWithoutAPartnerInTheOwnRecordHasThePersonWhoNamesThemAsPartner() {
+        Person homerWithoutPartner = new Person(1, "Homer", homer.birthDate());
+        People people = People.of(List.of(homerWithoutPartner, partnerNaming(1)));
+
+        assertThat(people.partnerOf(homerWithoutPartner)).isEqualTo(2L);
+    }
+
+    @Test
+    void aPartnerInTheOwnRecordWins() {
+        Person homerWithOtherPartner = new Person(1, "Homer", homer.birthDate(), null, null, 7L, List.of());
+        People people = People.of(List.of(homerWithOtherPartner, partnerNaming(1)));
+
+        assertThat(people.partnerOf(homerWithOtherPartner)).isEqualTo(7L);
+    }
+
+    @Test
+    void aPersonAsKnownHasThePartnerWhoNamesThem() {
+        Person homerOnlyById = new Person(1, null, null);
+        People people = People.of(List.of(partnerNaming(1)));
+
+        assertThat(people.asKnown(homerOnlyById).partner()).isEqualTo(2L);
+    }
+
+    private static Person partnerNaming(long partner) {
+        return new Person(2, "Marge", LocalDate.of(1956, 10, 1), null, null, partner, List.of());
+    }
+
     private static Person child(long id, Long parent1, Long parent2) {
         return new Person(id, "Child " + id, BORN, parent1, parent2, null, List.of());
     }

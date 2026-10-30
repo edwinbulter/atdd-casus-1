@@ -52,6 +52,14 @@ public final class Person {
         return this;
     }
 
+    /**
+     * This person as the service knows it without a record of its own: only the ID, no name or birth date. Relations
+     * can be added with the other methods.
+     */
+    public Person asKnownOnlyById() {
+        return new Person(null).withId(id);
+    }
+
     PersonRecord toRecord() {
         return new PersonRecord(id, name, birthDate, parent1, parent2, partner, children);
     }

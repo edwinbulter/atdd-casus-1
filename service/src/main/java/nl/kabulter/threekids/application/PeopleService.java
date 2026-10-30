@@ -29,7 +29,7 @@ public class PeopleService {
         people.put(person.id(), person);
         LocalDate today = LocalDate.now(clock);
         People everyone = People.of(people.values());
-        return people.values().stream()
+        return everyone.everyone().stream()
                 .filter(candidate -> ThreeKidFamily.matches(candidate, everyone, today))
                 .map(everyone::asKnown)
                 .toList();

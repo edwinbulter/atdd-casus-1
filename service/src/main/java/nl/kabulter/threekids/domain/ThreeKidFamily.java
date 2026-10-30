@@ -9,6 +9,8 @@ import java.util.Objects;
  * as a parent too, and at least one of whom is under 18 today.
  *
  * <ul>
+ *   <li>A person's partner is the partner in the own record; without one, the person who names this person as
+ *       partner. A person known only by ID can match too.</li>
  *   <li>A child's parents are the parents in its own record. An empty parent slot is repaired by a parent who lists
  *       the child; a filled slot is never overwritten, so when the records conflict, the child's own record wins.</li>
  *   <li>A person's children are the people in the person's own list who have the person as a parent. A child without
@@ -25,17 +27,18 @@ public final class ThreeKidFamily {
     }
 
     public static boolean matches(Person person, People people, LocalDate today) {
-        if (person.partner() == null) {
+        Long partnerId = people.partnerOf(person);
+        if (partnerId == null) {
             return false;
         }
-        Person partner = people.get(person.partner());
+        Person partner = people.get(partnerId);
         List<Person> children = people.childrenOf(person).stream()
                 .map(people::get)
                 .filter(Objects::nonNull)
                 .filter(child -> child.namesAsParent(person.id()) || child.emptyParentSlots() > 0)
                 .toList();
         return children.size() == CHILDREN
-                && children.stream().allMatch(child -> hasBothParents(child, person, person.partner(), partner))
+                && children.stream().allMatch(child -> hasBothParents(child, person, partnerId, partner))
                 && children.stream().anyMatch(child -> isUnder18(child, today));
     }
 

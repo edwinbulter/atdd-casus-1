@@ -56,4 +56,21 @@ class IntegrityScenarios {
         registry.answersThatTheMatchingPeopleAre(
                 homer.withChildren(bart, lisa, maggie), marge.withChildren(bart, lisa, maggie));
     }
+
+    @Test
+    void aPersonKnownOnlyByIdMatchesWithEverythingKnownAboutThem() {
+        // Given Marge is registered with the partner Homer and the children Bart, Lisa and Maggie, and Homer has no record
+        registry.registers(marge.withPartner(homer).withChildren(bart, lisa, maggie));
+
+        // And Bart and Lisa are registered with the parents Homer and Marge
+        registry.registers(bart.withParents(homer, marge));
+        registry.registers(lisa.withParents(homer, marge));
+
+        // When Maggie is registered with the parents Homer and Marge
+        registry.registers(maggie.withParents(homer, marge));
+
+        // Then Marge and Homer match; Homer is shown with what the others say about him: partner Marge and three children
+        registry.answersThatTheMatchingPeopleAre(
+                marge, homer.asKnownOnlyById().withPartner(marge).withChildren(bart, lisa, maggie));
+    }
 }
