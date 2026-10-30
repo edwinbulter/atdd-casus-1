@@ -42,4 +42,4 @@ Done.
 ## Performance (measure first)
 
 - **Done:** `make perf` measured the plain filter (O(n) per registration, 3.8 ms with 10,000 people); decided to make matching incremental (ADR 0011): 12 µs with 100,000 people, guarded by a work test and a property test (ADR 0012).
-- A concurrency test: parallel registrations keep the store consistent.
+- **Done:** a concurrency test: registrations and deletes from eight threads at once leave the register as if they had run one after the other (`FamilyRegisterConcurrencyTests`; without the lock it fails every time).

@@ -40,4 +40,5 @@ This replaces ADR 0005 on how matching works; keeping people in memory by ID sta
 1. **Property test** `FamilyRegisterPropertyTests` (jqwik, ADR 0012): generates hundreds of random sequences of registrations and, after every POST, compares the fast answer with the old way, checking everyone. Each part of `affectedBy`, and removing the old record from the lookup lists, was left out once by sabotage: every time this test turned red.
 2. **Time test** `FamilyRegisterTests.aMatchEndsWhenTheYoungestChildTurns18EvenWithoutARelatedRegistration`: a match ends when the youngest child turns 18, also without a related POST (seen red by sabotage).
 3. **Work test** `FamilyRegisterWorkTests`: with 1,000 people stored, one POST checks at most 10 people (before this change: 1,001).
-4. `make perf` measures the time itself; not in the pipeline, because timing on shared runners is unreliable.
+4. **Concurrency test** `FamilyRegisterConcurrencyTests`: registrations and deletes from eight threads at once give the same answer as one after the other (seen red by sabotage: without the lock, a `ConcurrentModificationException` every time).
+5. `make perf` measures the time itself; not in the pipeline, because timing on shared runners is unreliable.

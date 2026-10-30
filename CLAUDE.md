@@ -54,6 +54,7 @@ New libraries or tools (PIT, ...) only with an ADR.
 | Four layers: scenarios speak only the DSL; drivers make no assertions | `FourLayerTests` | `acceptance/.../architecture/` |
 | The acceptance tests test the build that was just made | `ServiceVersionScenarios` | `acceptance/.../scenarios/` |
 | Simplest construct; optimise only after a measurement (ADR): matching is incremental since ADR 0011, after `make perf` | `FamilyRegisterWorkTests`, `FamilyRegisterPropertyTests` | `domain/` |
+| Mutations at the same time stay consistent: the register handles them one at a time behind a lock (ADR 0011) | `FamilyRegisterConcurrencyTests` | `domain/` |
 | Mutations are idempotent: a POST of a known ID replaces, a DELETE of a deleted ID changes nothing | POST: `PeopleServiceTests.registeringTheSameRecordAgainGivesTheSameAnswer`, `.aNewRecordForAKnownIdReplacesTheOldOne`, `UpdateScenarios`; DELETE: `FamilyRegisterTests.deletingTheSameIdTwiceChangesNothing`, `DeletionScenarios` (deletes twice) | `domain/`, `application/`, `scenarios/` |
 
 **Target environment:** a local Docker container and the GitHub Actions runner. No Kubernetes.
