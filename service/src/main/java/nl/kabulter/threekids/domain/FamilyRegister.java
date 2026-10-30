@@ -1,6 +1,7 @@
 package nl.kabulter.threekids.domain;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,18 +40,37 @@ public final class FamilyRegister {
         lock.lock();
         try {
             Person earlier = people.put(person);
-            Set<Long> candidates = new HashSet<>(matching);
-            candidates.addAll(people.affectedBy(earlier, person));
-            for (long id : candidates) {
-                if (pattern.matches(people.recordOrId(id), people, today)) {
-                    matching.add(id);
-                } else {
-                    matching.remove(id);
-                }
-            }
+            check(people.affectedBy(earlier, person), today);
             return matching.stream().map(id -> people.asKnown(people.recordOrId(id))).toList();
         } finally {
             lock.unlock();
+        }
+    }
+
+    /** Deletes the people with these IDs and ignores them from now on, for storage and for matching. */
+    public void delete(Collection<Long> ids, LocalDate today) {
+        lock.lock();
+        try {
+            Set<Long> affected = new HashSet<>();
+            ids.forEach(id -> affected.addAll(people.delete(id)));
+            matching.removeAll(ids);
+            affected.removeAll(ids);
+            check(affected, today);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Checks the affected people and the people who matched, and keeps who matches now. Call with the lock held. */
+    private void check(Set<Long> affected, LocalDate today) {
+        Set<Long> candidates = new HashSet<>(matching);
+        candidates.addAll(affected);
+        for (long id : candidates) {
+            if (pattern.matches(people.recordOrId(id), people, today)) {
+                matching.add(id);
+            } else {
+                matching.remove(id);
+            }
         }
     }
 }

@@ -60,6 +60,10 @@ public final class Person {
         return new Person(null).withId(id);
     }
 
+    long id() {
+        return id;
+    }
+
     PersonRecord toRecord() {
         return new PersonRecord(id, name, birthDate, parent1, parent2, partner, children);
     }

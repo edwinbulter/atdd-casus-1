@@ -27,6 +27,10 @@ public final class Registry implements AutoCloseable {
         lastAnswer = service.register(person.toRecord());
     }
 
+    public void deletes(Person... people) {
+        service.delete(Arrays.stream(people).map(Person::id).toList());
+    }
+
     public void answersThatNobodyMatchesYet() {
         assertThat(lastAnswer).as("the answer to the last registration").isEqualTo(RegistrationAnswer.nobodyMatchesYet());
     }

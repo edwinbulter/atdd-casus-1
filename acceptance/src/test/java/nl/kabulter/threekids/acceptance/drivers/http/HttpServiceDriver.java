@@ -24,6 +24,7 @@ public class HttpServiceDriver implements ServiceDriver {
 
     /** The casus answers "nobody matches yet" with HTTP 444 No Response. */
     private static final int NO_RESPONSE = 444;
+    private static final int NO_CONTENT = 204;
 
     private final HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     private final JsonMapper json = JsonMapper.builder().build();
@@ -66,6 +67,19 @@ public class HttpServiceDriver implements ServiceDriver {
         }
         throw new IllegalStateException(
                 "POST /api/v1/people returned " + response.statusCode() + ": " + response.body());
+    }
+
+    /** The IDs go in a JSON body: {@code HttpRequest.Builder.DELETE()} would send no body at all. */
+    @Override
+    public void delete(List<Long> ids) {
+        HttpResponse<String> response = send(HttpRequest.newBuilder(baseUri.resolve("/api/v1/people"))
+                .header("Content-Type", "application/json")
+                .method("DELETE", HttpRequest.BodyPublishers.ofString(json.writeValueAsString(ids)))
+                .build());
+        if (response.statusCode() != NO_CONTENT) {
+            throw new IllegalStateException(
+                    "DELETE /api/v1/people returned " + response.statusCode() + ": " + response.body());
+        }
     }
 
     private ObjectNode toJson(PersonRecord person) {

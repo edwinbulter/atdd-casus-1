@@ -29,6 +29,16 @@ public record Person(
         return children.contains(child);
     }
 
+    /** This record without any reference to the given person, as if that person never existed. */
+    public Person withoutReferenceTo(long other) {
+        return new Person(id, name, birthDate, other(parent1, other), other(parent2, other), other(partner, other),
+                children.stream().filter(child -> child != other).toList());
+    }
+
+    private static Long other(Long reference, long other) {
+        return reference != null && reference == other ? null : reference;
+    }
+
     /** A person without known relations. */
     public Person(long id, String name, LocalDate birthDate) {
         this(id, name, birthDate, null, null, null, List.of());

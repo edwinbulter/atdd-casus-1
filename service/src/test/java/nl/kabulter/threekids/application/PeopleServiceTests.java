@@ -86,6 +86,15 @@ class PeopleServiceTests {
                 marge, new Person(1, null, null, null, null, 2L, List.of(3L, 4L, 5L)));
     }
 
+    @Test
+    void aDeletedPersonNoLongerCountsForMatching() {
+        registerTheFamily();
+
+        people.delete(List.of(4L));
+
+        assertThat(people.register(new Person(42, "Ada Lovelace", LocalDate.of(1815, 12, 10)))).isEmpty();
+    }
+
     /** Registers Homer, Marge and their three young children; returns the last one registered, Maggie. */
     private Person registerTheFamily() {
         people.register(homer);

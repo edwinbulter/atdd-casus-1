@@ -3,6 +3,7 @@ package nl.kabulter.threekids.api;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -84,5 +85,14 @@ class PeopleControllerTests {
                 .andExpect(jsonPath("$[0].partner.id").value(2))
                 .andExpect(jsonPath("$[0].children[*].id").value(contains(3, 4, 5)))
                 .andExpect(jsonPath("$[1].id").value(2));
+    }
+
+    @Test
+    void deletesTheIdsInTheBodyAndAnswers204() throws Exception {
+        mvc.perform(delete("/api/v1/people").contentType(MediaType.APPLICATION_JSON).content("[17, 99, 2137]"))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        verify(people).delete(List.of(17L, 99L, 2137L));
     }
 }

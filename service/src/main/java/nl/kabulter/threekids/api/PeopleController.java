@@ -6,6 +6,7 @@ import java.util.List;
 import nl.kabulter.threekids.application.PeopleService;
 import nl.kabulter.threekids.domain.Person;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +30,13 @@ class PeopleController {
             return ResponseEntity.status(NO_RESPONSE).build();
         }
         return ResponseEntity.ok(matching.stream().map(PersonJson::from).toList());
+    }
+
+    /** Deletes the people with these IDs and ignores them from now on (phase 2 of the casus). */
+    @DeleteMapping("/api/v1/people")
+    ResponseEntity<Void> delete(@RequestBody List<Long> ids) {
+        people.delete(ids);
+        return ResponseEntity.noContent().build();
     }
 
     /** A person record as the API receives and returns it; relations are references like {@code { "id": 7 }}. */

@@ -24,4 +24,8 @@ public class PeopleService {
     public List<Person> register(Person person) {
         return register.register(person, LocalDate.now(clock));
     }
+
+    public void delete(List<Long> ids) {
+        register.delete(ids, LocalDate.now(clock));
+    }
 }

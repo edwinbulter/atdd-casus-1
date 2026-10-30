@@ -60,6 +60,31 @@ public final class People {
         return affected;
     }
 
+    /**
+     * Deletes the person with this ID: the record goes, and every record that refers to the person is stored again
+     * without that reference. Returns the people whose match can change.
+     */
+    public Set<Long> delete(long id) {
+        Set<Long> affected = new HashSet<>();
+        Person record = byId.remove(id);
+        if (record != null) {
+            index(record, false);
+            affected.addAll(affectedBy(record, record));
+        }
+        Set<Long> referring = new TreeSet<>();
+        referring.addAll(childrenNamingParent.getOrDefault(id, new TreeSet<>()));
+        referring.addAll(partnerNaming.getOrDefault(id, new TreeSet<>()));
+        referring.addAll(listingAsChild.getOrDefault(id, new TreeSet<>()));
+        for (long other : referring) {
+            Person earlier = byId.get(other);
+            Person without = earlier.withoutReferenceTo(id);
+            put(without);
+            affected.addAll(affectedBy(earlier, without));
+        }
+        affected.remove(id);
+        return affected;
+    }
+
     /** Everyone the pattern considers: the people with a record, and the people only known by ID from others. */
     public List<Person> everyone() {
         List<Person> records = byId.values().stream().sorted(Comparator.comparingLong(Person::id)).toList();
