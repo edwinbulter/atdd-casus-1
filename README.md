@@ -2,7 +2,7 @@
 
 A Spring Boot service for the casus "[Three-Kid Family Challenge](doc/casus.md)", built with **acceptance test-driven development (ATDD)** as described by Dave Farley in *Modern Software Engineering* and *Continuous Delivery*, and with **automated quality assurance**: design rules are enforced by tests in the pipeline, not by review afterwards.
 
-> **Status:** step 0, the walking skeleton. The service reports the version it was built from (`GET /api/version`), checked by an acceptance scenario against the Docker image of that build. The guardrails ([ADR 0002](doc/adr/0002-guardrails-as-archunit-tests.md)) run in the commit stage; each one has been seen red once. The pipeline in GitHub Actions is green, and has been seen red once (a failing commit stage skips the acceptance stage). Phase 1 has started: registering a single person without a family answers **444** without a body; partners with three children answer **200** with the matching people, kept in memory and checked with a plain filter ([ADR 0005](doc/adr/0005-people-in-memory-checked-with-a-plain-filter.md)). The pattern checks a partner, exactly three children who all name that partner as parent, and at least one child under 18 today, the date in Europe/Amsterdam from an injected clock ([ADR 0007](doc/adr/0007-today-is-the-date-in-amsterdam-from-an-injected-clock.md)). Bidirectional integrity: an empty parent slot of a child is repaired from a parent who lists the child, when matching; when records conflict, the child's own record wins ([ADR 0008](doc/adr/0008-relations-are-repaired-when-matching-not-when-storing.md)). A parent who does not list the children gets them from the children's records, and the answer shows them ([ADR 0009](doc/adr/0009-the-answer-shows-the-children-who-name-a-person.md)). Posting a known ID again replaces the old record: the same record again changes nothing, a new one can end a match. A person known only by ID can match too, with a symmetric partner link, and is shown with everything known about them ([ADR 0010](doc/adr/0010-people-known-only-by-id-can-match-with-a-symmetric-partner.md)). Phase 1 is complete. Next: a performance measurement, then phase 2 (delete and ignore list).
+> **Status:** step 0, the walking skeleton. The service reports the version it was built from (`GET /api/version`), checked by an acceptance scenario against the Docker image of that build. The guardrails ([ADR 0002](doc/adr/0002-guardrails-as-archunit-tests.md)) run in the commit stage; each one has been seen red once. The pipeline in GitHub Actions is green, and has been seen red once (a failing commit stage skips the acceptance stage). Phase 1 has started: registering a single person without a family answers **444** without a body; partners with three children answer **200** with the matching people, kept in memory and checked with a plain filter ([ADR 0005](doc/adr/0005-people-in-memory-checked-with-a-plain-filter.md)). The pattern checks a partner, exactly three children who all name that partner as parent, and at least one child under 18 today, the date in Europe/Amsterdam from an injected clock ([ADR 0007](doc/adr/0007-today-is-the-date-in-amsterdam-from-an-injected-clock.md)). Bidirectional integrity: an empty parent slot of a child is repaired from a parent who lists the child, when matching; when records conflict, the child's own record wins ([ADR 0008](doc/adr/0008-relations-are-repaired-when-matching-not-when-storing.md)). A parent who does not list the children gets them from the children's records, and the answer shows them ([ADR 0009](doc/adr/0009-the-answer-shows-the-children-who-name-a-person.md)). Posting a known ID again replaces the old record: the same record again changes nothing, a new one can end a match. A person known only by ID can match too, with a symmetric partner link, and is shown with everything known about them ([ADR 0010](doc/adr/0010-people-known-only-by-id-can-match-with-a-symmetric-partner.md)). Phase 1 is complete, and matching is incremental (see Performance). Next: phase 2 (delete and ignore list).
 
 ## Getting started
 
@@ -40,21 +40,23 @@ The way of working is captured as [Claude Code skills](.claude/skills/): [`atdd`
 
 ## Performance
 
-After every registration the service checks everyone with a plain filter ([ADR 0005](doc/adr/0005-people-in-memory-checked-with-a-plain-filter.md)): it sorts the records, builds the indexes for children and partners ([ADR 0009](doc/adr/0009-the-answer-shows-the-children-who-name-a-person.md), [ADR 0010](doc/adr/0010-people-known-only-by-id-can-match-with-a-symmetric-partner.md)) and filters all candidates. Measured first, before any optimisation.
+Measured first, then optimised. Measured with `make perf`: in-process (the application service, without HTTP), on an Apple M1 Max. The population consists of families of five (two partners, three children); in ten families a child is under 18, so 20 people match. Each row registers that many people one by one into an empty service.
 
-Measured with `make perf`: in-process (the application service, without HTTP), on an Apple M1 Max. The population consists of families of five (two partners, three children); in ten families a child is under 18, so 20 people match. Each row registers that many people one by one into an empty service.
+| People registered | Check everyone ([ADR 0005](doc/adr/0005-people-in-memory-checked-with-a-plain-filter.md)): total, average of the last 100 | Incremental ([ADR 0011](doc/adr/0011-incremental-matching.md)): total, average of the last 100 |
+| ---: | ---: | ---: |
+| 1,000 | 0.5 s, 597 µs | 0.1 s, 52 µs |
+| 10,000 | 18.9 s, 3,824 µs | 0.2 s, 14 µs |
+| 100,000 | not measured (estimated ~30 minutes, ~38 ms) | 1.2 s, 12 µs |
 
-| People registered | Total | Average per registration | Average of the last 100 registrations |
-| ---: | ---: | ---: | ---: |
-| 1,000 | 0.5 s | 504 µs | 597 µs |
-| 5,000 | 4.8 s | 958 µs | 1,840 µs |
-| 10,000 | 18.9 s | 1,895 µs | 3,824 µs |
+Checking everyone, the work of a registration grew with the number of people stored. Incremental, a registration only checks the people whose match it can change, plus the people who matched (they can stop matching as time passes, and they are all in the answer anyway); the time stays the same however many people are stored (the first row includes the warm-up of the JVM). Two limits remain:
+- the answer contains all matching people, as the casus asks, so building it grows with the number of people that match;
+- registrations run one at a time behind a lock, so throughput is bounded by one thread; HTTP and JSON add their own cost per request.
 
-The work of a registration grows linearly with the number of people stored: doubling the people doubles the time of the last registrations (O(n) per registration, O(n²) for a whole run). Extrapolated: about 38 ms per registration with 100,000 people stored, and about 0.4 s with a million.
+The pipeline does not measure time, which is unreliable on shared runners. It guards the design instead: `FamilyRegisterWorkTests` counts the people checked per registration, and the property test `FamilyRegisterPropertyTests` (jqwik, [ADR 0012](doc/adr/0012-property-tests-with-jqwik.md)) checks that the incremental answer equals checking everyone.
 
 ## Tech stack
 
-Java 21, Spring Boot 4, Maven, Jib, JUnit 5, ArchUnit, Testcontainers and GitHub Actions.
+Java 21, Spring Boot 4, Maven, Jib, JUnit 5, jqwik, ArchUnit, Testcontainers and GitHub Actions.
 
 ## Time spent
 

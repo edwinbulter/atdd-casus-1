@@ -41,5 +41,5 @@ Done.
 
 ## Performance (measure first)
 
-- A measurement outside the commit stage registers 10,000 and 100,000 people and reports the time per registration. A plain filter over everyone makes each registration O(n). Only if the numbers are too slow, an ADR proposes something smarter, and a test guards the result against the plain version.
+- **Done:** `make perf` measured the plain filter (O(n) per registration, 3.8 ms with 10,000 people); decided to make matching incremental (ADR 0011): 12 µs with 100,000 people, guarded by a work test and a property test (ADR 0012).
 - A concurrency test: parallel registrations keep the store consistent.

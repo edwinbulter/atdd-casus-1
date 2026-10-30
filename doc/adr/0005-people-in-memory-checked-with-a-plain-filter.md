@@ -1,7 +1,7 @@
 # 0005. People are kept in memory, and every registration checks everyone with a plain filter
 
 Date: 2026-10-29
-Status: Accepted
+Status: Replaced by [0011](0011-incremental-matching.md) on how matching works; keeping people in memory by ID stays
 
 ## Context
 Scenario "partners with three children, one of them under 18, match" needs the service to remember people between registrations, and to tell after each registration who matches. The casus forbids filtering in SQL ("all filtering in Java"). The guardrails ask for the simplest construct, no smart algorithms up front, and concurrency through Java's concurrent data structures, not `synchronized` (skill `atdd` §4).

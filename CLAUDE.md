@@ -12,10 +12,10 @@ Werkwijze: skill `atdd` (`.claude/skills/atdd/`). This profile holds what is spe
 
 **Stack:**
 - Java 21 and Spring Boot 4 (Maven wrapper, Jib);
-- JUnit 5, ArchUnit and Testcontainers;
+- JUnit 5, jqwik (ADR 0012), ArchUnit and Testcontainers;
 - GitHub Actions.
 
-New libraries or tools (jqwik, PIT, ...) only with an ADR.
+New libraries or tools (PIT, ...) only with an ADR.
 
 **Commands**
 - Commit stage: `make commit-stage` (`mvnw verify`: unit, integration and architecture tests; the acceptance module only compiles and runs `FourLayerTests`).
@@ -34,7 +34,8 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 | Scenario (layer 1) | `acceptance/src/test/java/.../scenarios/` | JUnit 5 against the container |
 | DSL (layer 2) | `acceptance/src/test/java/.../dsl/` | via the scenarios |
 | Protocol driver (layer 3) | `acceptance/src/test/java/.../drivers/` (interface), `.../drivers/http/` | via the scenarios |
-| Domain (family graph, pattern) | `service/src/main/java/nl/kabulter/threekids/domain/` (no Spring) | JUnit |
+| Domain (family graph, pattern) | `service/src/main/java/nl/kabulter/threekids/domain/` (no Spring) | JUnit, jqwik (`*PropertyTests`) |
+| Performance | `FamilyRegisterWorkTests` (work per registration), `FamilyRegisterPropertyTests` (incremental = checking everyone), `RegistrationMeasurement` (`make perf`) | commit stage, except the measurement |
 | Application | `.../application/` | JUnit with test doubles |
 | API (controllers, DTOs) | `.../api/` | `@WebMvcTest`; `@SpringBootTest` with MockMvc |
 | Guardrails | `service/src/test/java/.../architecture/` | `ArchitectureTests` (ArchUnit), `NoSynchronizedBlocksTests` (source scan) |
@@ -52,7 +53,7 @@ New libraries or tools (jqwik, PIT, ...) only with an ADR.
 | No `LocalDate.now()`, `LocalDateTime.now()`, `Instant.now()`: use the injected `Clock` | `ArchitectureTests.noSystemClock` | `architecture/` |
 | Four layers: scenarios speak only the DSL; drivers make no assertions | `FourLayerTests` | `acceptance/.../architecture/` |
 | The acceptance tests test the build that was just made | `ServiceVersionScenarios` | `acceptance/.../scenarios/` |
-| Simplest construct: matching is a stream filter over all people in memory; no incremental matching, sorting or indexes unless a measurement demands it (ADR) | review of the ADR + `make perf` (later) | – |
+| Simplest construct; optimise only after a measurement (ADR): matching is incremental since ADR 0011, after `make perf` | `FamilyRegisterWorkTests`, `FamilyRegisterPropertyTests` | `domain/` |
 | Mutations are idempotent: a POST of a known ID replaces, a DELETE of a deleted ID changes nothing | POST: `PeopleServiceTests.registeringTheSameRecordAgainGivesTheSameAnswer`, `.aNewRecordForAKnownIdReplacesTheOldOne`, `UpdateScenarios`; DELETE: phase 2 | `application/`, `scenarios/` |
 
 **Target environment:** a local Docker container and the GitHub Actions runner. No Kubernetes.

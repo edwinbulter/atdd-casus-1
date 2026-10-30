@@ -2,47 +2,67 @@ package nl.kabulter.threekids.domain;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 
 /**
- * All registered people at one moment, as the pattern reads them. Built once per registration: the indexes from a
- * parent to the children who name that parent, and from a person to the person who names them as partner, cost one
- * pass over the records each (ADR 0005, ADR 0009, ADR 0010).
+ * The registered people, as the pattern reads them, with indexes that are kept up to date on every {@link #put}
+ * (ADR 0011): from a parent to the children who name that parent (ADR 0009), from a person to the people who name
+ * them as partner (ADR 0010), and from a child to the people who list it as a child. Not thread-safe: the
+ * {@link FamilyRegister} guards it.
  */
 public final class People {
 
-    private final List<Person> records;
-    private final Map<Long, Person> byId;
-    private final Map<Long, List<Long>> childrenNamingParent;
-    private final Map<Long, Long> partnerNaming;
+    private final Map<Long, Person> byId = new HashMap<>();
+    private final Map<Long, NavigableSet<Long>> childrenNamingParent = new HashMap<>();
+    private final Map<Long, NavigableSet<Long>> partnerNaming = new HashMap<>();
+    private final Map<Long, NavigableSet<Long>> listingAsChild = new HashMap<>();
 
-    private People(List<Person> records) {
-        this.records = records;
-        this.byId = records.stream().collect(Collectors.toUnmodifiableMap(Person::id, Function.identity()));
-        this.childrenNamingParent = records.stream()
-                .flatMap(child -> Stream.of(child.parent1(), child.parent2())
-                        .filter(Objects::nonNull)
-                        .map(parent -> Map.entry(parent, child.id())))
-                .collect(Collectors.groupingBy(Map.Entry::getKey,
-                        Collectors.mapping(Map.Entry::getValue, Collectors.toUnmodifiableList())));
-        this.partnerNaming = records.stream()
-                .filter(person -> person.partner() != null)
-                .collect(Collectors.toUnmodifiableMap(Person::partner, Person::id, (first, later) -> first));
+    /** The people with these records, as if they were registered in this order. */
+    public static People of(Collection<Person> records) {
+        People people = new People();
+        records.forEach(people::put);
+        return people;
     }
 
-    public static People of(Collection<Person> records) {
-        return new People(records.stream().sorted(Comparator.comparingLong(Person::id)).toList());
+    /** Stores the record, replacing an earlier record with the same ID; returns that earlier record, or null. */
+    public Person put(Person person) {
+        Person earlier = byId.put(person.id(), person);
+        if (earlier != null) {
+            index(earlier, false);
+        }
+        index(person, true);
+        return earlier;
+    }
+
+    /**
+     * The people whose match can change when {@code earlier} is replaced by {@code person}: the person, the people
+     * the old or new record names, and the people who name the person as partner or list the person as a child.
+     */
+    public Set<Long> affectedBy(Person earlier, Person person) {
+        Set<Long> affected = new HashSet<>();
+        affected.add(person.id());
+        Stream.of(earlier, person)
+                .filter(Objects::nonNull)
+                .flatMap(record -> Stream.of(record.parent1(), record.parent2(), record.partner()))
+                .filter(Objects::nonNull)
+                .forEach(affected::add);
+        affected.addAll(partnerNaming.getOrDefault(person.id(), new TreeSet<>()));
+        affected.addAll(listingAsChild.getOrDefault(person.id(), new TreeSet<>()));
+        return affected;
     }
 
     /** Everyone the pattern considers: the people with a record, and the people only known by ID from others. */
     public List<Person> everyone() {
+        List<Person> records = byId.values().stream().sorted(Comparator.comparingLong(Person::id)).toList();
         Stream<Person> knownOnlyById = records.stream()
                 .flatMap(person -> Stream.concat(
                         Stream.of(person.parent1(), person.parent2(), person.partner()), person.children().stream()))
@@ -54,15 +74,19 @@ public final class People {
         return Stream.concat(records.stream(), knownOnlyById).toList();
     }
 
-    /** The person's partner: the own record wins; without one, the person who names this person as partner. */
+    /** The person's partner: the own record wins; without one, the person with the lowest ID who names this person. */
     public Long partnerOf(Person person) {
-        return person.partner() != null ? person.partner() : partnerNaming.get(person.id());
+        if (person.partner() != null) {
+            return person.partner();
+        }
+        NavigableSet<Long> naming = partnerNaming.get(person.id());
+        return naming == null ? null : naming.first();
     }
 
     /** The person's children: first the person's own list, then the children whose records name the person. */
     public List<Long> childrenOf(Person person) {
         Set<Long> children = new LinkedHashSet<>(person.children());
-        children.addAll(childrenNamingParent.getOrDefault(person.id(), List.of()));
+        children.addAll(childrenNamingParent.getOrDefault(person.id(), new TreeSet<>()));
         return List.copyOf(children);
     }
 
@@ -75,5 +99,32 @@ public final class People {
     /** The record with this ID, or {@code null} when the person is only known by ID. */
     public Person get(long id) {
         return byId.get(id);
+    }
+
+    /** The record with this ID, or a person with only this ID. */
+    public Person recordOrId(long id) {
+        Person record = byId.get(id);
+        return record != null ? record : new Person(id, null, null);
+    }
+
+    private void index(Person person, boolean add) {
+        Stream.of(person.parent1(), person.parent2()).filter(Objects::nonNull).distinct()
+                .forEach(parent -> update(childrenNamingParent, parent, person.id(), add));
+        if (person.partner() != null) {
+            update(partnerNaming, person.partner(), person.id(), add);
+        }
+        person.children().forEach(child -> update(listingAsChild, child, person.id(), add));
+    }
+
+    private static void update(Map<Long, NavigableSet<Long>> index, long key, long value, boolean add) {
+        if (add) {
+            index.computeIfAbsent(key, ignored -> new TreeSet<>()).add(value);
+            return;
+        }
+        NavigableSet<Long> values = index.get(key);
+        values.remove(value);
+        if (values.isEmpty()) {
+            index.remove(key);
+        }
     }
 }
